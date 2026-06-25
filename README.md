@@ -1,8 +1,8 @@
 # CCA-F Practice Exam
 
-A scenario-based practice exam for the **Claude Certified Architect – Foundations (CCA-F)** certification, built as a single-page React app (Vite + Tailwind CSS). All UI and content are in English.
+A scenario-based practice exam for the **Claude Certified Architect – Foundations (CCA-F)** certification, built as a static single-page app (Vite + React + TypeScript + Tailwind CSS). All UI and content are in English, and **results stay on your device** — there is no backend.
 
-The app mirrors the real exam's structure: 5 weighted domains, 6 production scenarios (the real exam draws 4 of 6), multiple-choice questions with one correct answer and three distractors, an explanation after every answer, and a scaled score (100–1000, passing at 720).
+The app mirrors the real exam's structure: 5 weighted domains, 6 production scenarios (the real exam draws 4 of 6), multiple-choice questions with one correct answer and three distractors, an explanation after every answer, and a weighted scaled score (100–1000, passing at 720).
 
 ## Quick start
 
@@ -18,18 +18,36 @@ npm run build    # outputs to dist/
 npm run preview
 ```
 
+Quality gates (also run in CI):
+
+```bash
+npm run check      # Biome lint + format
+npm run typecheck  # tsc --noEmit (strict)
+npm test           # Jest unit/logic tests
+```
+
+> Requires Node ≥ 22.4 (the test runner uses `--no-experimental-webstorage`).
+
 ## Practice modes
 
 - **Balanced exam** (12 / 24 / 40 questions) — questions drawn to match the exact domain weights.
-- **Full mock exam** — 60 questions / 120-minute countdown, like the real exam, biased toward the harder question pool. Auto-submits when time runs out.
+- **Full mock exam** — 60 questions / 120-minute countdown, like the real exam, biased toward the harder question pool. Always timed; auto-submits when time runs out.
 - **Scenario mock** — 4 of 6 scenarios drawn at random.
 - **Domain drill** / **Scenario drill** — focus on a single domain or scenario.
+
+Tick **Timed · 2 min/question** before starting to add a countdown to any mode (the full mock is always timed). A timed run that expires jumps to the results screen with your partial answers preserved.
+
+## Scoring, persistence & history
+
+- The **scaled score is weighted by domain**: each domain's hit-rate is weighted by its official exam weight (renormalized over the domains present), then scaled to 100–1000. It's a faithful estimate, not Anthropic's proprietary scaling.
+- An **in-progress exam survives a refresh** — state is persisted to IndexedDB (via redux-persist) and the exact question draw is rebuilt from a stored seed.
+- Finished exams are kept as a compact **history** (score, per-domain summary, completion time) shown on the home screen, including your average score and average completion time.
 
 ## Saving results
 
 From the results screen (or the **Save** button in the exam header at any time) you can download a `.txt` report. The filename encodes the test type, the number of questions, and the start timestamp, e.g. `mock-60q-20260624-2231.txt`. The file contains every answered question, your answer, the correct answer, and the explanation.
 
-Note: the report is generated client-side on click (browsers cannot silently write files to disk), so nothing is created until you press download.
+> The report is generated client-side on click (browsers cannot silently write files to disk), so nothing is created until you press download.
 
 ## Exam blueprint
 
@@ -50,39 +68,22 @@ Real-exam reference: 60 questions, 120 minutes, passing score 720/1000.
 ```
 .
 ├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
+├── public/              # favicon, robots.txt
 └── src
-    ├── main.jsx        # entry point
-    ├── index.css       # Tailwind directives
-    └── App.jsx         # the entire app + question bank
+    ├── main.tsx         # entry: Provider + PersistGate + ErrorBoundary
+    ├── App.tsx          # routes on the current screen
+    ├── data/            # questions.json + domains/scenarios + Zod schema
+    ├── lib/             # pure logic: exam-builder, scoring, report, session, …
+    ├── store/           # Redux Toolkit slices, thunks, persistence
+    ├── components/      # screens + atoms
+    └── hooks/
 ```
 
 ## Editing the question bank
 
-All questions live in the `BANK` array near the top of `src/App.jsx`. Each entry:
+All questions live in `src/data/questions.json`, validated against the Zod schema in `src/data/schema.ts`. After any change, run `npm test` — the schema test rejects malformed entries (missing fields, not exactly one correct choice, bad domain/scenario refs, too few questions to fill a weighted mock).
 
-```js
-{
-  id: "S1Q1",          // unique id
-  s: 1,                // scenario (1–6)
-  d: 1,                // domain (1–5)
-  ts: "1.4",           // task statement reference
-  diff: "hard",        // optional; omit for standard difficulty
-  q: "Question text…",
-  choices: [
-    { t: "Correct option", c: true },
-    { t: "Distractor" },
-    { t: "Distractor" },
-    { t: "Distractor" },
-  ],
-  exp: "Explanation shown after answering.",
-}
-```
-
-Choice order is shuffled at runtime, so the correct answer is never positionally fixed. The mock exam pulls from questions tagged `diff: "hard"` first.
+See [`CLAUDE.md`](./CLAUDE.md) for the full question-authoring guide (schema, conventions, quality bar) and `references/` for the source material to ground new questions in.
 
 ## Deploy
 
