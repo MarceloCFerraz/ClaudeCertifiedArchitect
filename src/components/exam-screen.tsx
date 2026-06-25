@@ -67,6 +67,7 @@ export default function ExamScreen() {
               onClick={() => dispatch(examActions.exitedToHome())}
               className="shrink-0 font-mono text-xs text-stone-400 hover:text-stone-200 focus:outline-none"
               title="Exit"
+              aria-label="Exit exam"
             >
               ✕
             </button>
