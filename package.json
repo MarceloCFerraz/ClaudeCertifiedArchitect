@@ -7,17 +7,32 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "test": "jest"
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.0.1",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@types/sinon": "^21.0.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "jest": "^30.4.2",
     "postcss": "^8.4.49",
+    "sinon": "^22.0.0",
     "tailwindcss": "^3.4.17",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3",
     "vite": "^5.4.11"
   }
 }

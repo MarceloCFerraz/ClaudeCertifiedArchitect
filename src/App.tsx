@@ -1273,7 +1273,9 @@ export default function App() {
   const [config, setConfig] = useState({ mode: "balanced", length: 24 });
   const [questions, setQuestions] = useState([]);
   const [idx, setIdx] = useState(0);
-  const [answers, setAnswers] = useState({}); // qid -> { selected, correct }
+  const [answers, setAnswers] = useState<
+    Record<string, { selected: string; correct: boolean }>
+  >({}); // qid -> { selected, correct }
   const [session, setSession] = useState(null); // { label, fileType, count, createdAt, timed }
   const [remaining, setRemaining] = useState(0); // seconds left (simulado)
 

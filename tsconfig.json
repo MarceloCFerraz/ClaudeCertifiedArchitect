@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["node", "jest"],
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "esModuleInterop": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+
+    /* Gradual migration: the legacy single-file App is untyped JS-in-TS.
+       These are intentionally relaxed for Phase 0 and ratchet to strict in
+       Phase 2 as logic is extracted into typed modules. */
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "test", "vite.config.ts"]
+}
