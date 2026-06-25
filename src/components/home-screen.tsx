@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DOMAINS } from "../data/domains";
 import { BANK } from "../data/questions";
 import { SCENARIOS } from "../data/scenarios";
@@ -5,10 +6,13 @@ import type { ExamConfig } from "../lib/types";
 import { useAppDispatch } from "../store/hooks";
 import { startExam } from "../store/thunks";
 import { Bar, DomainTag } from "./atoms";
+import { HistoryPanel } from "./history-panel";
 
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
-  const start = (config: ExamConfig) => dispatch(startExam(config));
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  // The full mock is always timed; the toggle adds a 2-min/question timer to other modes.
+  const start = (config: ExamConfig) => dispatch(startExam({ ...config, timed: timerEnabled }));
 
   return (
     <div className="min-h-screen bg-stone-100 px-4 py-10 text-stone-900">
@@ -24,6 +28,8 @@ export default function HomeScreen() {
           choice with one correct answer and three distractors, an explanation after every answer,
           and a live score in the top-right corner.
         </p>
+
+        <HistoryPanel />
 
         {/* rules of the real exam */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -70,9 +76,23 @@ export default function HomeScreen() {
 
         {/* mode picker */}
         <div className="mt-6 rounded-xl border border-stone-200 bg-white p-5">
-          <h2 className="font-mono text-xs uppercase tracking-widest text-stone-400">
-            Choose how to practice
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-mono text-xs uppercase tracking-widest text-stone-400">
+              Choose how to practice
+            </h2>
+            <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-stone-600">
+              <input
+                type="checkbox"
+                checked={timerEnabled}
+                onChange={(e) => setTimerEnabled(e.target.checked)}
+                className="h-4 w-4 accent-orange-500"
+              />
+              <span>
+                Timed · 2 min/question
+                <span className="ml-1 text-xs text-stone-400">(the full mock is always timed)</span>
+              </span>
+            </label>
+          </div>
 
           <div className="mt-4 space-y-3">
             <button

@@ -3,7 +3,7 @@ import { fileTypeFor, labelFor } from "./report";
 import { createRng, randomSeed } from "./rng";
 import type { ExamConfig, PreparedQuestion, Session } from "./types";
 
-export const MOCK_SECONDS = 120 * 60; // real exam: 120 minutes
+export const SECONDS_PER_QUESTION = 120; // real exam: 120 minutes / 60 questions
 
 export interface NewExam {
   seed: number;
@@ -14,11 +14,12 @@ export interface NewExam {
 }
 
 /** Build a fresh exam run (impure: seeds from Math.random and stamps the clock).
-    The seed is kept so the same draw can be rebuilt on resume. */
+    The seed is kept so the same draw can be rebuilt on resume. The full mock is
+    always timed; other modes are timed only when the user opts in. */
 export function createExamSession(config: ExamConfig): NewExam {
   const seed = randomSeed();
   const questions = buildExam(config, createRng(seed));
-  const timed = config.mode === "mock";
+  const timed = config.mode === "mock" || config.timed === true;
   const session: Session = {
     label: labelFor(config),
     fileType: fileTypeFor(config),
@@ -26,7 +27,8 @@ export function createExamSession(config: ExamConfig): NewExam {
     createdAt: Date.now(),
     timed,
   };
-  return { seed, questions, session, timed, remaining: timed ? MOCK_SECONDS : 0 };
+  const remaining = timed ? questions.length * SECONDS_PER_QUESTION : 0;
+  return { seed, questions, session, timed, remaining };
 }
 
 /** Reproduce an exam's questions from its persisted (config, seed). */

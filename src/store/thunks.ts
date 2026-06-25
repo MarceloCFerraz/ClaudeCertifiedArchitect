@@ -1,8 +1,8 @@
 import { scoreExam } from "../lib/scoring";
 import { createExamSession } from "../lib/session";
-import type { ExamConfig } from "../lib/types";
+import type { Attempt, ExamConfig } from "../lib/types";
 import { examActions } from "./exam-slice";
-import { type Attempt, historyActions } from "./history-slice";
+import { historyActions } from "./history-slice";
 import type { AppDispatch, RootState } from "./index";
 
 export const startExam = (config: ExamConfig) => (dispatch: AppDispatch) => {

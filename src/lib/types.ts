@@ -9,6 +9,7 @@ export interface ExamConfig {
   length?: number; // balanced
   domain?: number; // domain drill
   scenario?: number; // scenario drill
+  timed?: boolean; // opt-in timer for non-mock modes (the full mock is always timed)
 }
 
 export interface PreparedChoice {
@@ -35,4 +36,25 @@ export interface Session {
   count: number;
   createdAt: number; // epoch ms (serializable for Redux/persist)
   timed: boolean;
+}
+
+export interface AttemptDomain {
+  domain: number;
+  correct: number;
+  total: number;
+}
+
+/** Compact record of a finished exam — no question text, so history stays small. */
+export interface Attempt {
+  id: string;
+  mode: Mode;
+  label: string;
+  date: number; // epoch ms
+  scaled: number;
+  passing: boolean;
+  correct: number;
+  answered: number;
+  total: number;
+  elapsedSeconds: number;
+  perDomain: AttemptDomain[];
 }

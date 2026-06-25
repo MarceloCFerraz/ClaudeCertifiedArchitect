@@ -15,6 +15,7 @@ export default function ExamScreen() {
   const answers = useAppSelector((s) => s.exam.answers);
   const session = useAppSelector((s) => s.exam.session);
   const timed = useAppSelector((s) => s.exam.timed);
+  const isMock = useAppSelector((s) => s.exam.config?.mode === "mock");
   const remaining = useAppSelector((s) => s.exam.remaining);
   const saveReport = useSaveReport();
 
@@ -71,7 +72,7 @@ export default function ExamScreen() {
             </button>
             <div className="min-w-0">
               <div className="font-mono text-[11px] uppercase tracking-widest text-stone-500">
-                CCA-F · {session?.timed ? "Mock exam" : "Practice"}
+                CCA-F · {isMock ? "Mock exam" : "Practice"}
               </div>
               <div className="flex items-center gap-2">
                 <span className="truncate font-mono text-xs text-stone-300">
