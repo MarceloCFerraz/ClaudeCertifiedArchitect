@@ -1,14 +1,20 @@
-import { combineReducers, configureStore } from "@reduxjs/toolkit";
+import {
+  combineReducers,
+  configureStore,
+  type Dispatch,
+  type ThunkDispatch,
+  type UnknownAction,
+} from "@reduxjs/toolkit";
 import localforage from "localforage";
 import {
   FLUSH,
   PAUSE,
   PERSIST,
   PURGE,
-  REGISTER,
-  REHYDRATE,
   persistReducer,
   persistStore,
+  REGISTER,
+  REHYDRATE,
 } from "redux-persist";
 import examReducer from "./exam-slice";
 import historyReducer from "./history-slice";
@@ -45,5 +51,10 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+// Types derive from the unpersisted slices so they match a plain store (used in
+// tests) — there is no nested `_persist` key to account for, and thunks/selectors
+// never read it.
+const typeRootReducer = combineReducers({ exam: examReducer, history: historyReducer });
+export type RootState = ReturnType<typeof typeRootReducer>;
+export type AppDispatch = ThunkDispatch<RootState, undefined, UnknownAction> &
+  Dispatch<UnknownAction>;

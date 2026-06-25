@@ -1,5 +1,5 @@
-import { BANK } from "../data/questions";
 import { DOMAINS } from "../data/domains";
+import { BANK } from "../data/questions";
 import { SCENARIOS } from "../data/scenarios";
 import type { ExamConfig } from "../lib/types";
 import { useAppDispatch } from "../store/hooks";

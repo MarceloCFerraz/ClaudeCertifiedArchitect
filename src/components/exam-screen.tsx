@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from "react";
 import { SCENARIOS } from "../data/scenarios";
+import { useSaveReport } from "../hooks/use-save-report";
 import { fmtTime } from "../lib/format";
 import { scoreExam } from "../lib/scoring";
-import { useSaveReport } from "../hooks/use-save-report";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { examActions } from "../store/exam-slice";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { finishExam } from "../store/thunks";
 import { Bar, DomainTag } from "./atoms";
 

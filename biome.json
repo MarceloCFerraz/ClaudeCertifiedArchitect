@@ -17,7 +17,12 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "preset": "recommended"
+    }
+  },
+  "css": {
+    "linter": {
+      "enabled": false
     }
   },
   "javascript": {

@@ -1,8 +1,8 @@
 import { BANK } from "../../src/data/questions";
 import {
-  MOCK_LEN,
   allocateByWeight,
   buildExam,
+  MOCK_LEN,
   prepareQuestion,
   shuffle,
 } from "../../src/lib/exam-builder";

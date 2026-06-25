@@ -1,5 +1,5 @@
-import type { Question } from "./schema";
 import questionsJson from "./questions.json";
+import type { Question } from "./schema";
 
 /* Typed view of the raw JSON bank. Integrity (unique ids, exactly one correct
    choice, valid domain/scenario refs, sufficient counts) is enforced by the

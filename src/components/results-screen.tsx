@@ -1,9 +1,9 @@
 import { DOMAINS } from "../data/domains";
-import { PASS_SCORE, READY_SCORE, scoreExam } from "../lib/scoring";
-import { reportFileName } from "../lib/report";
 import { useSaveReport } from "../hooks/use-save-report";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { reportFileName } from "../lib/report";
+import { PASS_SCORE, READY_SCORE, scoreExam } from "../lib/scoring";
 import { examActions } from "../store/exam-slice";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { startExam } from "../store/thunks";
 import { Bar, DomainTag } from "./atoms";
 

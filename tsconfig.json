@@ -14,12 +14,9 @@
     "noEmit": true,
     "skipLibCheck": true,
 
-    /* Gradual migration: the legacy single-file App is untyped JS-in-TS.
-       These are intentionally relaxed for Phase 0 and ratchet to strict in
-       Phase 2 as logic is extracted into typed modules. */
-    "strict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src", "test", "vite.config.ts"]
