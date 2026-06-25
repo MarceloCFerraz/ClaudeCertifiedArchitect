@@ -39,7 +39,7 @@ export function labelFor(config: ExamConfig): string {
 }
 
 export function reportFileName(session: Session): string {
-  return `${session.fileType}-${session.count}q-${stamp(session.createdAt)}.txt`;
+  return `${session.fileType}-${session.count}q-${stamp(new Date(session.createdAt))}.txt`;
 }
 
 export function buildReport(
@@ -54,7 +54,7 @@ export function buildReport(
   lines.push("Claude Certified Architect – Foundations · Result");
   lines.push(`Type: ${session.label}`);
   lines.push(`Questions in exam: ${session.count}`);
-  lines.push(`Created at: ${session.createdAt.toLocaleString()}`);
+  lines.push(`Created at: ${new Date(session.createdAt).toLocaleString()}`);
   lines.push(`Answered: ${answeredQuestions.length}/${session.count}`);
   lines.push(
     `Correct: ${score.correct}/${answeredQuestions.length}  ·  Estimated scaled score: ${score.scaled}  ·  Passing: ${PASS_SCORE}`,

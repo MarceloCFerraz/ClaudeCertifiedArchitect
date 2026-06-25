@@ -31,6 +31,6 @@ export interface Session {
   label: string;
   fileType: string;
   count: number;
-  createdAt: Date;
+  createdAt: number; // epoch ms (serializable for Redux/persist)
   timed: boolean;
 }

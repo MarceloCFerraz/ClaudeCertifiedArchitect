@@ -61,7 +61,7 @@ export default function App() {
       label: labelFor(cfg),
       fileType: fileTypeFor(cfg),
       count: built.length,
-      createdAt: new Date(),
+      createdAt: Date.now(),
       timed: cfg.mode === "mock",
     };
     setConfig(cfg);

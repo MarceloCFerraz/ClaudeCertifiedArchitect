@@ -21,7 +21,7 @@ const session: Session = {
   label: "Mock exam (60 questions · timed · hard)",
   fileType: "mock",
   count: 60,
-  createdAt: new Date(2026, 5, 24, 22, 31, 5),
+  createdAt: new Date(2026, 5, 24, 22, 31, 5).getTime(),
   timed: true,
 };
 
