@@ -2,6 +2,8 @@ import type { Question } from "../data/schema";
 
 export type Mode = "balanced" | "mock" | "scenarios" | "domain" | "scenario";
 
+export type Screen = "home" | "exam" | "results";
+
 export interface ExamConfig {
   mode: Mode;
   length?: number; // balanced
