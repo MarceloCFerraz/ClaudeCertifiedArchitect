@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Practice exam for the Claude Certified Architect – Foundations (CCA-F) certification.",
+  "engines": {
+    "node": ">=22.4"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
