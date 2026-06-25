@@ -2,6 +2,12 @@ import { useState, useMemo, useEffect } from "react";
 import { DOMAINS } from "./data/domains";
 import { SCENARIOS } from "./data/scenarios";
 import { BANK } from "./data/questions";
+import { downloadText } from "./lib/download";
+import { buildExam } from "./lib/exam-builder";
+import { fmtTime } from "./lib/format";
+import { buildReport, fileTypeFor, labelFor, reportFileName } from "./lib/report";
+import { PASS_SCORE, READY_SCORE, scoreExam } from "./lib/scoring";
+import type { ExamConfig, PreparedQuestion, Session } from "./lib/types";
 
 /* =========================================================================
    Claude Certified Architect – Foundations (CCA-F) · Practice Exam
@@ -12,162 +18,6 @@ import { BANK } from "./data/questions";
    - Scaled 100–1000, passing score 720; practice-exam target: >900
    ========================================================================= */
 
-
-/* ---------- helpers ---------- */
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-const LETTERS = ["A", "B", "C", "D"];
-
-function prepareQuestion(q) {
-  const shuffled = shuffle(q.choices);
-  const choices = shuffled.map((c, i) => ({ ...c, k: LETTERS[i] }));
-  const correctKey = choices.find((c) => c.c).k;
-  return { ...q, choices, correctKey };
-}
-
-/* largest-remainder allocation of `total` across domains by weight */
-function allocateByWeight(total) {
-  const ids = [1, 2, 3, 4, 5];
-  const raw = ids.map((id) => ({ id, exact: (DOMAINS[id].weight / 100) * total }));
-  const floored = raw.map((r) => ({ ...r, base: Math.floor(r.exact), rem: r.exact - Math.floor(r.exact) }));
-  let used = floored.reduce((s, r) => s + r.base, 0);
-  let left = total - used;
-  const order = [...floored].sort((a, b) => b.rem - a.rem);
-  const counts = {};
-  floored.forEach((r) => (counts[r.id] = r.base));
-  for (let i = 0; i < left; i++) counts[order[i % order.length].id] += 1;
-  return counts;
-}
-
-function sampleN(pool, n) {
-  return shuffle(pool).slice(0, Math.min(n, pool.length));
-}
-
-/* weighted draw across domains; preferHard pulls hard questions first within each domain */
-function pickByWeight(total, preferHard) {
-  const counts = allocateByWeight(total);
-  const out = [];
-  [1, 2, 3, 4, 5].forEach((d) => {
-    const pool = BANK.filter((q) => q.d === d);
-    const hard = shuffle(pool.filter((q) => q.diff === "hard"));
-    const std = shuffle(pool.filter((q) => q.diff !== "hard"));
-    const ordered = preferHard ? [...hard, ...std] : [...std, ...hard];
-    out.push(...ordered.slice(0, counts[d]));
-  });
-  return out;
-}
-
-const MOCK_LEN = 60; // matches the real exam: 60 questions / 120 minutes
-
-function buildExam(config) {
-  let selected = [];
-  if (config.mode === "mock") {
-    selected = pickByWeight(MOCK_LEN, true);
-  } else if (config.mode === "balanced") {
-    selected = pickByWeight(config.length, false);
-  } else if (config.mode === "scenarios") {
-    const scenarios = shuffle([1, 2, 3, 4, 5, 6]).slice(0, 4);
-    config._scenarios = scenarios;
-    selected = BANK.filter((q) => scenarios.includes(q.s));
-  } else if (config.mode === "domain") {
-    selected = BANK.filter((q) => q.d === config.domain);
-  } else if (config.mode === "scenario") {
-    selected = BANK.filter((q) => q.s === config.scenario);
-  } else {
-    selected = [...BANK];
-  }
-  // order grouped by scenario for natural scenario framing, scenarios in random order
-  const order = shuffle([1, 2, 3, 4, 5, 6]);
-  selected.sort((a, b) => {
-    const sa = order.indexOf(a.s), sb = order.indexOf(b.s);
-    if (sa !== sb) return sa - sb;
-    return 0;
-  });
-  return selected.map(prepareQuestion);
-}
-
-/* ---------- result file (download) ---------- */
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
-function stamp(d) {
-  return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
-}
-function fmtTime(s) {
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const x = s % 60;
-  return h > 0 ? `${h}:${pad2(m)}:${pad2(x)}` : `${pad2(m)}:${pad2(x)}`;
-}
-function fileTypeFor(cfg) {
-  if (cfg.mode === "mock") return "mock";
-  if (cfg.mode === "balanced") return "balanced";
-  if (cfg.mode === "scenarios") return "scenarios";
-  if (cfg.mode === "domain") return `domain-d${cfg.domain}`;
-  if (cfg.mode === "scenario") return `scenario-${cfg.scenario}`;
-  return "exam";
-}
-function labelFor(cfg) {
-  if (cfg.mode === "mock") return "Mock exam (60 questions · timed · hard)";
-  if (cfg.mode === "balanced") return `Balanced exam (${cfg.length} questions)`;
-  if (cfg.mode === "scenarios") return "Scenario mock (4 of 6)";
-  if (cfg.mode === "domain") return `Drill · ${DOMAINS[cfg.domain].name}`;
-  if (cfg.mode === "scenario") return `Drill · Scenario ${cfg.scenario}: ${SCENARIOS[cfg.scenario].title}`;
-  return "Exam";
-}
-function reportFileName(session) {
-  return `${session.fileType}-${session.count}q-${stamp(session.createdAt)}.txt`;
-}
-function buildReport(session, questions, answers) {
-  const ans = questions.filter((q) => answers[q.id]);
-  const right = ans.filter((q) => answers[q.id].correct).length;
-  const scaledV = ans.length ? Math.round(100 + (right / ans.length) * 900) : 100;
-  const L = [];
-  L.push("Claude Certified Architect – Foundations · Result");
-  L.push(`Type: ${session.label}`);
-  L.push(`Questions in exam: ${session.count}`);
-  L.push(`Created at: ${session.createdAt.toLocaleString()}`);
-  L.push(`Answered: ${ans.length}/${session.count}`);
-  L.push(`Correct: ${right}/${ans.length}  ·  Estimated scaled score: ${scaledV}  ·  Passing: 720`);
-  L.push("=".repeat(72));
-  ans.forEach((q, i) => {
-    const a = answers[q.id];
-    const yours = q.choices.find((c) => c.k === a.selected);
-    const correctChoice = q.choices.find((c) => c.k === q.correctKey);
-    L.push("");
-    L.push(
-      `Q${i + 1}  [D${q.d} · Scenario ${q.s} · TS ${q.ts}${q.diff === "hard" ? " · hard" : ""}]  ${a.correct ? "✔ correct" : "✘ wrong"}`
-    );
-    L.push(q.q);
-    q.choices.forEach((c) => L.push(`   ${c.k}) ${c.t}`));
-    L.push(`Your answer:    ${a.selected}) ${yours.t}`);
-    L.push(`Correct answer: ${q.correctKey}) ${correctChoice.t}`);
-    L.push(`Explanation: ${q.exp}`);
-  });
-  return L.join("\n");
-}
-function downloadText(name, text) {
-  try {
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  } catch (e) {
-    console.error("download failed", e);
-  }
-}
 
 /* ---------- small UI atoms ---------- */
 function DomainTag({ d }) {
@@ -188,22 +38,22 @@ function Bar({ value, className = "" }) {
 
 /* ============================ App ============================ */
 export default function App() {
-  const [screen, setScreen] = useState("home");
-  const [config, setConfig] = useState({ mode: "balanced", length: 24 });
-  const [questions, setQuestions] = useState([]);
+  const [screen, setScreen] = useState<"home" | "exam" | "results">("home");
+  const [config, setConfig] = useState<ExamConfig>({ mode: "balanced", length: 24 });
+  const [questions, setQuestions] = useState<PreparedQuestion[]>([]);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<
     Record<string, { selected: string; correct: boolean }>
   >({}); // qid -> { selected, correct }
-  const [session, setSession] = useState(null); // { label, fileType, count, createdAt, timed }
+  const [session, setSession] = useState<Session | null>(null); // { label, fileType, count, createdAt, timed }
   const [remaining, setRemaining] = useState(0); // seconds left (mock)
 
   const answered = Object.keys(answers).length;
   const correct = Object.values(answers).filter((a) => a.correct).length;
   const total = questions.length;
   const pct = answered ? Math.round((correct / answered) * 100) : 0;
-  const scaled = answered ? Math.round(100 + (correct / answered) * 900) : 100;
-  const passing = scaled >= 720;
+  const scaled = scoreExam(questions, answers, "answered").scaled;
+  const passing = scaled >= PASS_SCORE;
 
   function start(cfg) {
     const built = buildExam({ ...cfg });
@@ -419,9 +269,9 @@ export default function App() {
       if (a?.correct) byDomain[q.d].c += 1;
     });
     const missed = questions.filter((q) => answers[q.id] && !answers[q.id].correct);
-    const finalScaled = total ? Math.round(100 + (correct / total) * 900) : 100;
-    const finalPass = finalScaled >= 720;
-    const ready = finalScaled >= 900;
+    const finalScaled = scoreExam(questions, answers, "total").scaled;
+    const finalPass = finalScaled >= PASS_SCORE;
+    const ready = finalScaled >= READY_SCORE;
     const band = ready
       ? { label: "Ready", note: "You hit the practice-exam target (> 900). Solid confidence for the real deal.", cls: "text-emerald-700 bg-emerald-50 border-emerald-200" }
       : finalPass

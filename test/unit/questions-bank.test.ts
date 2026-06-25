@@ -23,9 +23,9 @@ describe("question bank integrity", () => {
   });
 
   it("gives every question exactly one correct choice", () => {
-    const offenders = BANK.filter(
-      (q) => q.choices.filter((c) => c.c === true).length !== 1
-    ).map((q) => q.id);
+    const offenders = BANK.filter((q) => q.choices.filter((c) => c.c === true).length !== 1).map(
+      (q) => q.id,
+    );
     expect(offenders).toEqual([]);
   });
 
