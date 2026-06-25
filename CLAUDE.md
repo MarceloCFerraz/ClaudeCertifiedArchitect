@@ -89,6 +89,10 @@ fill its share of a 60-question mock (the schema test enforces this floor).
 
 - One unambiguously correct answer; three distractors that are *plausible* but reflect
   real anti-patterns or common misconceptions, not obviously wrong throwaways.
+- **Balance option lengths** — keep all four options in a tight length band (roughly
+  90–150 chars, none more than ~1.4× the shortest) and make sure the correct answer is
+  **not** the longest. Otherwise the answer is guessable by length alone, which the real
+  exam avoids. `test/unit/answer-balance.test.ts` enforces this bank-wide.
 - The explanation should teach: state why the right answer is right and why the
   tempting distractor is wrong.
 - Prefer questions that test judgment in the scenario over trivia recall.
