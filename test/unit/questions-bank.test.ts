@@ -13,8 +13,8 @@ describe("question bank schema", () => {
 });
 
 describe("question bank integrity", () => {
-  it("has 92 questions", () => {
-    expect(BANK).toHaveLength(92);
+  it("retains at least the baseline number of questions", () => {
+    expect(BANK.length).toBeGreaterThanOrEqual(92);
   });
 
   it("has unique question ids", () => {
