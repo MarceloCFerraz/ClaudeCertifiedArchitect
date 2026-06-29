@@ -362,10 +362,10 @@
         "t": "Lower the temperature to 0 and resend the same prose so the model interprets it deterministically each time."
       },
       {
-        "t": "Ask Claude to infer the intended pattern by studying how the existing codebase already applies the change."
+        "t": "Define a JSON schema for the output and validate each iteration's result against it, so wrong transformations get caught automatically."
       }
     ],
-    "exp": "Concrete input/output examples are the most effective way to pin down a transformation when prose is interpreted inconsistently. More prose, temperature tweaks, and inference don't resolve the ambiguity."
+    "exp": "Concrete input/output examples pin down a transformation when prose is read inconsistently, because they show the exact mapping the model must produce. A JSON schema only checks the output's shape after the fact — not whether the transformation logic is right — and more prose or a lower temperature doesn't resolve the ambiguity."
   },
   {
     "id": "S2Q6",
@@ -4033,5 +4033,221 @@
       }
     ],
     "exp": "A trustworthy threshold is calibrated on labeled data by measuring actual error rates at each confidence level, because a raw score is not inherently a probability. An arbitrary cutoff, the model's own 1 to 10 self-rating (it can be confidently wrong), or the batch average are all uncalibrated proxies."
+  },
+  {
+    "id": "S2Q20",
+    "s": 2,
+    "d": 3,
+    "ts": "3.2",
+    "diff": "hard",
+    "q": "Including two or three full exemplar endpoint implementations as context makes Claude generate new endpoints in your house style, but carrying them in every session bloats unrelated work like bug fixes and reviews. How should you make the exemplars available?",
+    "choices": [
+      {
+        "t": "Put the exemplars plus pattern-following instructions in an on-demand slash-command skill, so they load only when generating endpoints.",
+        "c": true
+      },
+      {
+        "t": "Add the exemplar endpoints to the project CLAUDE.md so they are always loaded and every task can benefit from the established house style."
+      },
+      {
+        "t": "Keep pasting the exemplars by hand, but only into the sessions where you happen to be generating a new endpoint that needs them."
+      },
+      {
+        "t": "Move the exemplars into a .claude/rules/ file with a paths glob so they load whenever any source file in the repo is being edited."
+      }
+    ],
+    "exp": "A slash-command skill loads the exemplars only when invoked for endpoint generation, keeping them out of bug fixes and reviews. CLAUDE.md is loaded every turn, manual pasting is error-prone and easy to forget, and a broad paths glob still fires during unrelated edits to those same files."
+  },
+  {
+    "id": "S2Q21",
+    "s": 2,
+    "d": 3,
+    "ts": "3.2",
+    "diff": "hard",
+    "q": "Your team ships a /commit skill in the project's .claude/skills/commit/. You want a tweaked version for personal use, but adding a commit skill to your ~/.claude/skills/ has no effect. Why, and what is the fix?",
+    "choices": [
+      {
+        "t": "Personal skills always override project skills, so your file must be malformed; recreate ~/.claude/skills/commit/SKILL.md to make it take effect."
+      },
+      {
+        "t": "Project skills take precedence over personal ones of the same name, so give your personal skill a distinct name like /my-commit and it resolves.",
+        "c": true
+      },
+      {
+        "t": "Skills load only from the project directory, so a personal skill cannot run; edit the shared project /commit skill directly instead."
+      },
+      {
+        "t": "Two skills with the same name cancel each other out, so delete the project /commit so that only your personal version remains."
+      }
+    ],
+    "exp": "A personal and project skill that share a name resolve to the project one, so your same-named personal skill is shadowed; renaming it makes it available alongside the team's. Personal skills don't override project skills, personal skills do load, and same-named skills don't mutually cancel."
+  },
+  {
+    "id": "S1Q29",
+    "s": 1,
+    "d": 4,
+    "ts": "4.1",
+    "diff": "hard",
+    "q": "On complex support cases, your agent's resolution messages are inconsistently complete — sometimes missing the policy basis, the timeline, or the next steps — and which piece is missing varies case to case. Few-shot templates haven't fixed it. What works best?",
+    "choices": [
+      {
+        "t": "Have the agent self-critique each draft against a completeness checklist (concern, policy, timeline, next steps) before sending it.",
+        "c": true
+      },
+      {
+        "t": "Add few-shot examples of complete resolutions for your five most common complex case types so the agent mirrors their structure each time."
+      },
+      {
+        "t": "Expand the system prompt with a rigid template whose every field each resolution message must fill in before it is sent to the customer."
+      },
+      {
+        "t": "Route every complex case to a human who verifies completeness before the resolution message goes out to the customer."
+      }
+    ],
+    "exp": "A self-critique (evaluator-optimizer) step checks each draft against explicit completeness criteria and catches the case-specific gaps that vary between cases. Few-shot for a fixed set of case types can't anticipate the varied omissions, a rigid template still misses anything it didn't enumerate, and human-reviewing every complex case removes the automation's value."
+  },
+  {
+    "id": "S1Q30",
+    "s": 1,
+    "d": 1,
+    "ts": "1.3",
+    "diff": "hard",
+    "q": "Your support agent has clear, well-written tool descriptions, yet whenever a message contains the word \"account\" it routes to get_customer even for pure order-status questions. The system prompt opens with \"For any account matter, start by pulling the customer record.\" Most likely cause?",
+    "choices": [
+      {
+        "t": "The tool descriptions still need negative examples spelling out when not to use get_customer, since they don't yet exclude order questions."
+      },
+      {
+        "t": "A keyword-sensitive system-prompt line keyed to \"account\" overrides the descriptions and steers selection; revise that wording.",
+        "c": true
+      },
+      {
+        "t": "The model is sampling too randomly between the tools; lowering the temperature will make the routing deterministic and correct."
+      },
+      {
+        "t": "There are too many tools with overlapping triggers; merging get_customer and lookup_order removes the ambiguous choice entirely."
+      }
+    ],
+    "exp": "A systematic, keyword-triggered pattern alongside otherwise good descriptions points to system-prompt wording that reacts to \"account\" and overrides tool selection. Adding negative examples contradicts the premise that the descriptions are already clear, temperature doesn't explain a consistent keyword pattern, and merging two distinct tools loses a needed capability."
+  },
+  {
+    "id": "S1Q31",
+    "s": 1,
+    "d": 5,
+    "ts": "5.2",
+    "diff": "hard",
+    "q": "While resolving a refund, process_refund returns a transient gateway timeout. Your agent immediately escalates the whole case to a human on that first timeout. What is the better behavior?",
+    "choices": [
+      {
+        "t": "Retry the call a bounded number of times for transient errors, and escalate with context only if it still fails.",
+        "c": true
+      },
+      {
+        "t": "Escalate on the first transient error as it does now, since any tool failure means the agent can no longer safely proceed."
+      },
+      {
+        "t": "Retry the timed-out call indefinitely until the gateway responds, since a transient error means the request will eventually succeed."
+      },
+      {
+        "t": "Treat the timeout as a permanent business error and tell the customer the refund is not possible right now."
+      }
+    ],
+    "exp": "Transient failures warrant bounded local recovery — a few retries — before escalating, and the handoff should carry what was attempted. Escalating on the first timeout wastes a recoverable case, retrying forever can stall on a truly down service, and labeling a transient timeout a permanent business error misclassifies it and misleads the customer."
+  },
+  {
+    "id": "S3Q28",
+    "s": 3,
+    "d": 2,
+    "ts": "2.3",
+    "diff": "hard",
+    "q": "Requests like \"analyze the quarterly report\" get misrouted between your document-analysis tool and a web-search tool named analyze_content whose description reads \"analyzes and returns content.\" Both look applicable. What most reliably fixes the misrouting?",
+    "choices": [
+      {
+        "t": "Expand only the document-analysis tool's description with example use cases, leaving the web-search tool's name and generic description unchanged."
+      },
+      {
+        "t": "Rename the web-search tool to extract_web_results and redescribe it around web searches and URLs, removing the overlap with document analysis.",
+        "c": true
+      },
+      {
+        "t": "Add a system-prompt rule that routes any request mentioning \"report\" to the document-analysis tool before the model gets to choose."
+      },
+      {
+        "t": "Merge the two into one analyze tool that internally decides whether to search the web or read a supplied document."
+      }
+    ],
+    "exp": "The two tools' names and descriptions semantically overlap, so the fix must disambiguate both — renaming and redescribing the web-search tool removes the collision. Expanding only the document tool leaves the web tool still looking applicable, a keyword router bypasses the model's judgment and is brittle, and merging two distinct capabilities just trades the routing problem for a more complex tool."
+  },
+  {
+    "id": "S3Q29",
+    "s": 3,
+    "d": 1,
+    "ts": "1.2",
+    "diff": "hard",
+    "q": "Combined outputs from your web-search agent (verbose page text) and document agent (full extracted content) overflow the synthesis agent's context, so synthesis silently drops sources. What fixes this at the root?",
+    "choices": [
+      {
+        "t": "Have upstream agents return structured findings — key facts, citations, relevance scores — not verbose page text or raw content.",
+        "c": true
+      },
+      {
+        "t": "Have the synthesis agent process the findings in sequential batches, keeping running state between calls to stay under the limit."
+      },
+      {
+        "t": "Raise the synthesis agent's max_tokens and move to a larger-context model so all of the verbose content fits at once."
+      },
+      {
+        "t": "Truncate each upstream output to a fixed character budget before it reaches synthesis, cutting whatever spills over."
+      }
+    ],
+    "exp": "Reducing token volume at the source — upstream agents emit compact structured findings — preserves the information synthesis needs while fitting the budget. Sequential batching keeps synthesis from seeing all findings at once and risks compounding loss, a bigger window just delays the same overflow, and blind truncation drops content arbitrarily regardless of relevance."
+  },
+  {
+    "id": "S5Q24",
+    "s": 5,
+    "d": 4,
+    "ts": "4.3",
+    "diff": "hard",
+    "q": "Your CI review posts about 15 findings per PR. Developers must keep all of them visible — no filtering allowed — but they spend most of their time clicking into each finding to reconstruct why Claude flagged it before acting. What most reduces that triage cost?",
+    "choices": [
+      {
+        "t": "Have each finding carry its reasoning and a confidence assessment inline, so a developer can judge it without opening it separately.",
+        "c": true
+      },
+      {
+        "t": "Group the findings into blocking issues versus optional suggestions, each tier carrying its own different review requirements for developers."
+      },
+      {
+        "t": "Cap the output at the five highest-severity findings so developers have fewer items to investigate on each PR."
+      },
+      {
+        "t": "Run a second pass that rewrites every finding to be shorter, so developers have less text to read per item."
+      }
+    ],
+    "exp": "Surfacing each finding's reasoning and confidence inline lets developers triage on sight, directly cutting investigation time while keeping every finding visible. Tiering into blocking vs suggestions reorganizes the list without reducing per-finding investigation, capping the count filters findings (disallowed here), and merely shortening the text drops the rationale that triage actually needs."
+  },
+  {
+    "id": "S5Q25",
+    "s": 5,
+    "d": 3,
+    "ts": "3.6",
+    "diff": "hard",
+    "q": "Your review bot runs six categories. Style, naming, and documentation each false-positive about half the time; security and correctness are highly precise. Developers now dismiss every finding without reading. What is the best immediate move while you fix the noisy prompts?",
+    "choices": [
+      {
+        "t": "Disable the style, naming, and documentation categories for now, running only the high-precision ones until their prompts improve.",
+        "c": true
+      },
+      {
+        "t": "Keep all six categories enabled and add few-shot examples to each, accepting the noise over the weeks it takes to improve them all."
+      },
+      {
+        "t": "Lower the model temperature globally so the noisy categories produce fewer false-positive comments across the board."
+      },
+      {
+        "t": "Collapse all six categories into one combined score so the precise findings are no longer drowned out by the noisy ones."
+      }
+    ],
+    "exp": "The noisy categories are eroding trust in the precise ones, so disabling them now stops the bleeding while you fix their criteria offline, preserving the value of security and correctness. Keeping them on prolongs the trust erosion for weeks, temperature doesn't fix false-positive logic, and collapsing categories hides the very signal developers rely on."
   }
 ]
