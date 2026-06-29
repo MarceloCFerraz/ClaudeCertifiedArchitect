@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import { SCENARIOS } from "../data/scenarios";
 import { useSaveReport } from "../hooks/use-save-report";
 import { fmtTime } from "../lib/format";
 import { scoreExam } from "../lib/scoring";
@@ -7,6 +6,9 @@ import { examActions } from "../store/exam-slice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { finishExam } from "../store/thunks";
 import { Bar, DomainTag } from "./atoms";
+import ScenarioCard from "./scenario-card";
+import ScenarioDomains from "./scenario-domains";
+import ScenarioTracker from "./scenario-tracker";
 
 export default function ExamScreen() {
   const dispatch = useAppDispatch();
@@ -26,19 +28,25 @@ export default function ExamScreen() {
 
   const q = questions[idx];
   const isLast = idx + 1 >= total;
-  const advance = isLast ? () => dispatch(finishExam()) : () => dispatch(examActions.advanced());
+  const goPrev = () => dispatch(examActions.navigatedTo(idx - 1));
+  const onNext = isLast
+    ? () => dispatch(finishExam())
+    : () => dispatch(examActions.navigatedTo(idx + 1));
 
-  /* keyboard: Enter/→ advances once answered (no letter keys — they clashed with Cmd/Ctrl+C) */
+  /* keyboard: ←/→ navigate freely; Enter advances (no letter keys — they clashed with
+     Cmd/Ctrl+C). Advancing never auto-submits — finishing is an explicit click. */
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const current = questions[idx];
-      if (!current || !answers[current.id]) return;
-      if (e.key === "Enter" || e.key === "ArrowRight") advance();
+      if (e.key === "ArrowLeft") {
+        if (idx > 0) dispatch(examActions.navigatedTo(idx - 1));
+      } else if ((e.key === "Enter" || e.key === "ArrowRight") && !isLast) {
+        dispatch(examActions.navigatedTo(idx + 1));
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, [idx, isLast, dispatch]);
 
   /* timed mock countdown: ticks each second, auto-submits at 0 */
   useEffect(() => {
@@ -54,7 +62,7 @@ export default function ExamScreen() {
   if (!q) return null;
   const a = answers[q.id];
   const isAnswered = !!a;
-  const scenarioChanged = idx === 0 || questions[idx - 1].s !== q.s;
+  const allAnswered = answered === total;
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900">
@@ -128,27 +136,21 @@ export default function ExamScreen() {
             </div>
           </div>
         </div>
-        <Bar value={total ? (idx / total) * 100 : 0} className="rounded-none" />
+        <Bar value={total ? (answered / total) * 100 : 0} className="rounded-none" />
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-6">
-        {/* scenario framing */}
-        {scenarioChanged && (
-          <div className="mb-5 rounded-xl border border-stone-200 bg-white p-4">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[11px] uppercase tracking-widest text-orange-600">
-                Scenario {q.s}
-              </span>
-              <span className="font-semibold">{SCENARIOS[q.s].title}</span>
-            </div>
-            <p className="mt-2 text-sm text-stone-600">{SCENARIOS[q.s].blurb}</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {SCENARIOS[q.s].domains.map((d) => (
-                <DomainTag key={d} d={d} />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* per-question progress tracker */}
+        <ScenarioTracker
+          questions={questions}
+          answers={answers}
+          current={idx}
+          onJump={(i) => dispatch(examActions.navigatedTo(i))}
+        />
+
+        {/* scenario framing (collapsible, shown on every question) */}
+        <ScenarioCard s={q.s} />
+        <ScenarioDomains s={q.s} />
 
         {/* question */}
         <div className="rounded-xl border border-stone-200 bg-white p-5 sm:p-6">
@@ -215,23 +217,47 @@ export default function ExamScreen() {
           )}
         </div>
 
-        {/* nav */}
+        {/* nav: free movement; finishing is always an explicit click */}
         <div className="mt-5 flex items-center justify-between">
-          <span className="font-mono text-xs text-stone-400">
-            {isAnswered ? "Shortcut: Enter to advance" : "Select an answer"}
-          </span>
           <button
             type="button"
-            onClick={advance}
-            disabled={!isAnswered}
-            className={`rounded-lg px-6 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
-              isAnswered
-                ? "bg-stone-900 text-white hover:bg-stone-800"
-                : "cursor-not-allowed bg-stone-200 text-stone-400"
+            onClick={goPrev}
+            disabled={idx === 0}
+            className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+              idx === 0
+                ? "cursor-not-allowed border-stone-200 text-stone-300"
+                : "border-stone-300 text-stone-700 hover:border-stone-500"
             }`}
           >
-            {isLast ? "See result" : "Next"}
+            ← Previous
           </button>
+
+          <div className="flex items-center gap-2">
+            {!isLast && (
+              <button
+                type="button"
+                onClick={() => dispatch(finishExam())}
+                disabled={!allAnswered}
+                title={
+                  allAnswered ? "Finish and see your results" : "Answer all questions to finish"
+                }
+                className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+                  allAnswered
+                    ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "cursor-not-allowed border-stone-200 text-stone-300"
+                }`}
+              >
+                See Results
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onNext}
+              className="rounded-lg bg-stone-900 px-6 py-3 font-semibold text-white transition hover:bg-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+            >
+              {isLast ? "See result" : "Next →"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

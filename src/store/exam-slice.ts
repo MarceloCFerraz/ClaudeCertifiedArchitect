@@ -54,8 +54,10 @@ const examSlice = createSlice({
       const { qid, selected, correct } = action.payload;
       if (!state.answers[qid]) state.answers[qid] = { selected, correct };
     },
-    advanced(state) {
-      if (state.idx + 1 < state.questions.length) state.idx += 1;
+    navigatedTo(state, action: PayloadAction<number>) {
+      const max = state.questions.length - 1;
+      if (max < 0) return;
+      state.idx = Math.max(0, Math.min(action.payload, max));
     },
     decrementTimer(state) {
       if (state.remaining > 0) state.remaining -= 1;
