@@ -26,24 +26,26 @@ export default function ResultsScreen() {
     ? {
         label: "Ready",
         note: "You hit the practice-exam target (> 900). Solid confidence for the real deal.",
-        cls: "text-emerald-700 bg-emerald-50 border-emerald-200",
+        cls: "text-success-text bg-success-surface border-success-border-subtle",
       }
     : passing
       ? {
           label: "Passing, but shore it up",
           note: "Above the 720 cut, but below the 900 target. Reinforce the weak domains below.",
-          cls: "text-orange-700 bg-orange-50 border-orange-200",
+          cls: "text-brand-on-surface-muted bg-brand-surface border-brand-border",
         }
       : {
           label: "Not yet",
           note: "Below the 720 cut. Review the weak domains and retake.",
-          cls: "text-rose-700 bg-rose-50 border-rose-200",
+          cls: "text-destructive-text bg-destructive-surface border-destructive-border-subtle",
         };
 
   return (
-    <div className="min-h-screen bg-stone-100 px-4 py-10 text-stone-900">
+    <div className="min-h-screen bg-background px-4 py-10 text-foreground">
       <div className="mx-auto max-w-3xl">
-        <p className="font-mono text-xs uppercase tracking-widest text-stone-400">Exam result</p>
+        <p className="font-mono text-xs uppercase tracking-widest text-foreground-faint">
+          Exam result
+        </p>
 
         <div className={`mt-3 rounded-2xl border p-6 ${band.cls}`}>
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -65,8 +67,8 @@ export default function ResultsScreen() {
         </div>
 
         {/* per domain */}
-        <div className="mt-6 rounded-xl border border-stone-200 bg-white p-5">
-          <h2 className="font-mono text-xs uppercase tracking-widest text-stone-400">
+        <div className="mt-6 rounded-xl border border-border bg-card p-5">
+          <h2 className="font-mono text-xs uppercase tracking-widest text-foreground-faint">
             Performance by domain
           </h2>
           <div className="mt-3 space-y-3">
@@ -75,16 +77,18 @@ export default function ResultsScreen() {
               const weak = p < WEAK_THRESHOLD;
               return (
                 <div key={domain} className="flex items-center gap-3">
-                  <span className="w-10 shrink-0 font-mono text-sm font-semibold text-orange-600">
+                  <span className="w-10 shrink-0 font-mono text-sm font-semibold text-brand">
                     D{domain}
                   </span>
-                  <span className="flex-1 text-sm text-stone-700">{DOMAINS[domain].name}</span>
+                  <span className="flex-1 text-sm text-foreground-muted">
+                    {DOMAINS[domain].name}
+                  </span>
                   <span className="w-28 shrink-0">
                     <Bar value={p} />
                   </span>
                   <span
                     className={`w-20 shrink-0 text-right font-mono text-sm font-semibold ${
-                      weak ? "text-rose-600" : "text-stone-700"
+                      weak ? "text-destructive-text" : "text-foreground-muted"
                     }`}
                   >
                     {c}/{t} · {p}%
@@ -93,15 +97,15 @@ export default function ResultsScreen() {
               );
             })}
           </div>
-          <p className="mt-3 text-xs text-stone-500">
+          <p className="mt-3 text-xs text-foreground-subtle">
             Domains below 70% are flagged in red — prioritize them in your review.
           </p>
         </div>
 
         {/* missed review */}
         {missed.length > 0 && (
-          <div className="mt-6 rounded-xl border border-stone-200 bg-white p-5">
-            <h2 className="font-mono text-xs uppercase tracking-widest text-stone-400">
+          <div className="mt-6 rounded-xl border border-border bg-card p-5">
+            <h2 className="font-mono text-xs uppercase tracking-widest text-foreground-faint">
               Review · {missed.length} to review
             </h2>
             <div className="mt-4 space-y-5">
@@ -112,22 +116,22 @@ export default function ResultsScreen() {
                 return (
                   <div
                     key={q.id}
-                    className="border-t border-stone-100 pt-4 first:border-0 first:pt-0"
+                    className="border-t border-border-subtle pt-4 first:border-0 first:pt-0"
                   >
                     <div className="mb-1 flex items-center gap-2">
                       <DomainTag d={q.d} />
-                      <span className="font-mono text-[11px] text-stone-400">
+                      <span className="font-mono text-[11px] text-foreground-faint">
                         Scenario {q.s} · TS {q.ts}
                       </span>
                     </div>
-                    <p className="text-sm font-medium text-stone-800">{q.q}</p>
-                    <p className="mt-2 text-sm text-rose-700">
+                    <p className="text-sm font-medium text-foreground">{q.q}</p>
+                    <p className="mt-2 text-sm text-destructive-text">
                       <span className="font-mono">{a.selected}.</span> {yours?.t}
                     </p>
-                    <p className="mt-1 text-sm text-emerald-700">
+                    <p className="mt-1 text-sm text-success-text">
                       <span className="font-mono">{q.correctKey}.</span> {right?.t}
                     </p>
-                    <p className="mt-2 rounded-md bg-stone-50 p-3 text-sm text-stone-600">
+                    <p className="mt-2 rounded-md bg-muted p-3 text-sm text-foreground-muted">
                       {q.exp}
                     </p>
                   </div>
@@ -141,30 +145,31 @@ export default function ResultsScreen() {
           <button
             type="button"
             onClick={saveReport}
-            className="rounded-lg bg-orange-600 px-5 py-3 font-semibold text-white transition hover:bg-orange-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+            className="rounded-lg bg-brand px-5 py-3 font-semibold text-white transition hover:bg-brand-vivid focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
           >
             ↓ Download results (.txt)
           </button>
           <button
             type="button"
             onClick={() => config && dispatch(startExam(config))}
-            className="rounded-lg bg-stone-900 px-5 py-3 font-semibold text-white transition hover:bg-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+            className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
           >
             Retake this mode
           </button>
           <button
             type="button"
             onClick={() => dispatch(examActions.exitedToHome())}
-            className="rounded-lg border border-stone-300 px-5 py-3 font-semibold transition hover:border-stone-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+            className="rounded-lg border border-border-strong px-5 py-3 font-semibold transition hover:border-border-hover-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
           >
             Back to start
           </button>
         </div>
         {session && (
-          <p className="mt-3 text-xs text-stone-400">
-            File: <span className="font-mono text-stone-500">{reportFileName(session)}</span> — the
-            name carries the test type, the number of questions, and the time the exam was started.
-            It contains every answered question, your answer, and the correct one.
+          <p className="mt-3 text-xs text-foreground-faint">
+            File:{" "}
+            <span className="font-mono text-foreground-subtle">{reportFileName(session)}</span> —
+            the name carries the test type, the number of questions, and the time the exam was
+            started. It contains every answered question, your answer, and the correct one.
           </p>
         )}
       </div>

@@ -1,3 +1,5 @@
+import ThemeToggle from "./theme-toggle";
+
 const REPO_URL = "https://github.com/MarceloCFerraz/ClaudeCertifiedArchitect";
 
 function GitHubMark({ className }: { className?: string }) {
@@ -10,25 +12,31 @@ function GitHubMark({ className }: { className?: string }) {
 
 export default function Footer() {
   return (
-    <footer className="bg-stone-100 px-4 pb-8 pt-2 text-stone-900">
-      <a
-        href={REPO_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group mx-auto flex w-fit items-center gap-2 rounded-md px-2 py-1 text-sm text-stone-500 transition hover:text-orange-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-      >
-        <GitHubMark className="h-4 w-4 shrink-0" />
-        <span>
-          This project is{" "}
-          <span className="font-medium text-stone-700 transition group-hover:text-orange-600 group-hover:underline">
-            open source
-          </span>{" "}
-          on{" "}
-          <span className="font-medium text-stone-700 transition group-hover:text-orange-600 group-hover:underline">
-            GitHub
+    <footer className="bg-background px-4 pb-8 pt-2 text-foreground">
+      <div className="mx-auto flex w-fit items-center gap-3">
+        <a
+          href={REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm text-foreground-subtle transition hover:text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
+        >
+          <GitHubMark className="h-4 w-4 shrink-0" />
+          <span>
+            This project is{" "}
+            <span className="font-medium text-foreground-muted transition group-hover:text-brand group-hover:underline">
+              open source
+            </span>{" "}
+            on{" "}
+            <span className="font-medium text-foreground-muted transition group-hover:text-brand group-hover:underline">
+              GitHub
+            </span>
           </span>
-        </span>
-      </a>
+        </a>
+        {/* Wide viewports get the gutter-parked toggle from App instead. At the foot of
+            the page the menu has to open upward, or it would fall off the bottom, and
+            right-aligned so it grows toward the centre rather than off a narrow screen. */}
+        <ThemeToggle className="lg:hidden" menuPlacement="above" menuAlign="right" />
+      </div>
     </footer>
   );
 }

@@ -32,10 +32,10 @@ export class ErrorBoundary extends Component<Props, State> {
   render(): ReactNode {
     if (!this.state.hasError) return this.props.children;
     return (
-      <div className="flex min-h-screen items-center justify-center bg-stone-100 px-4 text-stone-900">
-        <div className="max-w-md rounded-xl border border-stone-200 bg-white p-6 text-center">
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+        <div className="max-w-md rounded-xl border border-border bg-card p-6 text-center">
           <h1 className="text-lg font-bold">Something went wrong</h1>
-          <p className="mt-2 text-sm text-stone-600">
+          <p className="mt-2 text-sm text-foreground-muted">
             The app hit an unexpected error. Reload to try again, or reset to clear any saved exam
             state.
           </p>
@@ -43,14 +43,14 @@ export class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-lg bg-stone-900 px-4 py-2.5 font-semibold text-white transition hover:bg-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              className="rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
             >
               Reload
             </button>
             <button
               type="button"
               onClick={this.reset}
-              className="rounded-lg border border-stone-300 px-4 py-2.5 font-semibold transition hover:border-stone-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              className="rounded-lg border border-border-strong px-4 py-2.5 font-semibold transition hover:border-border-hover-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
             >
               Reset & restart
             </button>

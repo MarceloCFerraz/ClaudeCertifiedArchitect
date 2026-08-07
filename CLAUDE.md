@@ -33,6 +33,35 @@ npm test           # Jest (schema + logic unit tests)
   ratchets toward strict as `App.tsx` is decomposed into typed modules.
 - All content and UI strings are **en-US English**.
 
+## Theming (dark mode)
+
+Colors go through **semantic tokens**, never raw palette classes. Each token is a CSS
+variable defined twice in `src/index.css` — `:root` (light) and `.dark` (dark) — and
+registered as a Tailwind color in `tailwind.config.js`. A component's classes are
+therefore identical in both themes; only the active variable group changes.
+
+```
+surfaces   bg-background  bg-card  bg-muted  bg-secondary
+text       text-foreground  -muted  -subtle  -faint  -disabled
+borders    border-border  -strong  -subtle  -hover  -hover-strong
+buttons    bg-primary / text-primary-foreground / hover:bg-primary-hover / text-primary-accent
+brand      text-brand  bg-brand-vivid  bg-brand-surface  text-brand-on-surface  …
+states     bg-success-surface  text-success-text  bg-destructive-surface  …
+```
+
+Use these in new components rather than `stone-*`/`orange-*` or a `dark:` variant —
+there are no `dark:` variants in this codebase by design. Opacity modifiers work
+(`bg-foreground/10`). Two deliberate exceptions: the exam HUD keeps fixed `stone-*`
+text because it is dark chrome in *both* themes, and `text-white` stays on saturated
+success/destructive/brand fills.
+
+The theme itself lives in `src/lib/theme.ts` (pure, dependency-injected, unit-tested)
+and `src/components/theme-provider.tsx`. It is a three-way preference — system / light
+/ dark — persisted to `localStorage`, **not** to the Redux store: the store persists to
+IndexedDB asynchronously, which cannot be read before first paint. The inline script in
+`index.html` applies the theme pre-paint to avoid a flash; its storage key must stay in
+sync with `THEME_STORAGE_KEY`.
+
 ---
 
 ## Authoring new questions

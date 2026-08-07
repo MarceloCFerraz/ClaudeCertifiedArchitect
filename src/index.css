@@ -2,6 +2,117 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme tokens. Components never name a palette color directly — they use the
+   semantic token, and only the active group below changes when the theme flips.
+   Light values are the original stone/orange/emerald/rose shades, so light mode
+   is unchanged. Channels are bare HSL so Tailwind can apply opacity modifiers. */
+@layer base {
+  :root {
+    color-scheme: light;
+
+    --background: 60 4.8% 95.9%; /* stone-100 */
+    --card: 0 0% 100%; /* white */
+    --muted: 60 9.1% 97.8%; /* stone-50 */
+    --secondary: 20 5.9% 90%; /* stone-200 */
+
+    --foreground: 24 9.8% 10%; /* stone-900 */
+    --foreground-muted: 30 6.3% 25.1%; /* stone-700 */
+    --foreground-subtle: 25 5.3% 44.7%; /* stone-500 */
+    --foreground-faint: 24 5.4% 63.9%; /* stone-400 */
+    --foreground-disabled: 24 5.7% 82.9%; /* stone-300 */
+
+    --border: 20 5.9% 90%; /* stone-200 */
+    --border-strong: 24 5.7% 82.9%; /* stone-300 */
+    --border-subtle: 60 4.8% 95.9%; /* stone-100 */
+    --border-hover: 24 5.4% 63.9%; /* stone-400 */
+    --border-hover-strong: 25 5.3% 44.7%; /* stone-500 */
+
+    --primary: 24 9.8% 10%; /* stone-900 */
+    --primary-foreground: 0 0% 100%; /* white */
+    --primary-hover: 12 6.5% 15.1%; /* stone-800 */
+    --primary-accent: 30.7 97.2% 72.4%; /* orange-300 */
+
+    --hud: 24 9.8% 10%; /* stone-900 */
+    --hud-line: 12 6.5% 15.1%; /* stone-800 */
+
+    --brand: 20.5 90.2% 48.2%; /* orange-600 */
+    --brand-vivid: 24.6 95% 53.1%; /* orange-500 */
+    --brand-bright: 27 96% 61%; /* orange-400 */
+    --brand-surface: 33.3 100% 96.5%; /* orange-50 */
+    --brand-surface-hover: 34.3 100% 91.8%; /* orange-100 */
+    --brand-border: 32.1 97.7% 83.1%; /* orange-200 */
+    --brand-on-surface: 15 74.6% 27.8%; /* orange-900 */
+    --brand-on-surface-muted: 15 79.1% 33.7%; /* orange-800 */
+
+    --success: 160.1 84.1% 39.4%; /* emerald-500 */
+    --success-strong: 161.4 93.5% 30.4%; /* emerald-600 */
+    --success-strong-hover: 162.9 93.5% 24.3%; /* emerald-700 */
+    --success-surface: 151.8 81% 95.9%; /* emerald-50 */
+    --success-border: 156.2 71.6% 66.9%; /* emerald-300 */
+    --success-border-subtle: 152.4 76% 80.4%; /* emerald-200 */
+    --success-text: 162.9 93.5% 24.3%; /* emerald-700 */
+
+    --destructive: 349.7 89.2% 60.2%; /* rose-500 */
+    --destructive-surface: 355.7 100% 97.3%; /* rose-50 */
+    --destructive-border: 352.6 96.1% 81.8%; /* rose-300 */
+    --destructive-border-subtle: 352.7 96.1% 90%; /* rose-200 */
+    --destructive-text: 345.3 82.7% 40.8%; /* rose-700 */
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --background: 20 14% 8%;
+    --card: 24 9% 12%;
+    --muted: 20 10% 16%;
+    --secondary: 20 8% 22%;
+
+    --foreground: 60 9% 94%;
+    --foreground-muted: 30 6% 78%;
+    --foreground-subtle: 25 5% 62%;
+    --foreground-faint: 24 5% 48%;
+    --foreground-disabled: 24 5% 32%;
+
+    --border: 20 7% 20%;
+    --border-strong: 24 6% 28%;
+    --border-subtle: 20 8% 15%;
+    --border-hover: 24 6% 40%;
+    --border-hover-strong: 24 6% 52%;
+
+    /* Primary inverts: a near-black button would vanish against a dark page. */
+    --primary: 60 9% 92%;
+    --primary-foreground: 24 10% 10%;
+    --primary-hover: 60 6% 82%;
+    --primary-accent: 20.5 90.2% 48.2%;
+
+    --hud: 20 12% 5%;
+    --hud-line: 20 8% 14%;
+
+    --brand: 24.6 95% 58%;
+    --brand-vivid: 27 96% 61%;
+    --brand-bright: 30.7 97.2% 72.4%;
+    --brand-surface: 22 50% 12%;
+    --brand-surface-hover: 22 48% 17%;
+    --brand-border: 22 45% 28%;
+    --brand-on-surface: 31 97% 80%;
+    --brand-on-surface-muted: 31 95% 70%;
+
+    --success: 160.1 84.1% 39.4%;
+    --success-strong: 161.4 93.5% 33%;
+    --success-strong-hover: 162.9 93.5% 27%;
+    --success-surface: 162 55% 10%;
+    --success-border: 162 40% 26%;
+    --success-border-subtle: 162 40% 20%;
+    --success-text: 156.2 71.6% 66.9%;
+
+    --destructive: 349.7 89.2% 60.2%;
+    --destructive-surface: 347 50% 12%;
+    --destructive-border: 347 40% 30%;
+    --destructive-border-subtle: 347 40% 22%;
+    --destructive-text: 352.6 96.1% 81.8%;
+  }
+}
+
 html,
 body,
 #root {
@@ -14,4 +125,7 @@ body {
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Painted here too, so overscroll and any gap below the screens stay on-theme. */
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }

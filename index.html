@@ -4,7 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1c1917" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f4" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171512" />
+    <!-- Applies the theme before first paint, so a dark-mode reload never flashes
+         white. Runs ahead of React because the store persists to IndexedDB, which
+         is async and therefore unreadable this early. The key must stay in sync
+         with THEME_STORAGE_KEY in src/lib/theme.ts. -->
+    <script>
+      (() => {
+        try {
+          const stored = localStorage.getItem("cca-f-theme");
+          const dark =
+            stored === "dark" ||
+            (stored !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+        } catch {
+          /* storage blocked (private mode) — fall back to the light theme */
+        }
+      })();
+    </script>
     <title>CCA-F Practice Exam — Claude Certified Architect (Foundations)</title>
     <meta
       name="description"

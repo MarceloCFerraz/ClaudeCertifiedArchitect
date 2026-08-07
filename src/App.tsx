@@ -3,6 +3,7 @@ import ExamScreen from "./components/exam-screen";
 import Footer from "./components/footer";
 import HomeScreen from "./components/home-screen";
 import ResultsScreen from "./components/results-screen";
+import ThemeToggle from "./components/theme-toggle";
 import { rebuildExam } from "./lib/session";
 import { examActions } from "./store/exam-slice";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
@@ -30,6 +31,14 @@ export default function App() {
   return (
     <>
       {screenEl}
+      {/* Parked in the gutter beside the max-w-3xl column, below the exam HUD, so it
+          never covers content. Narrower viewports have no gutter — Footer carries it.
+          The menu aligns left so it opens away from the column, into empty gutter; at
+          the lg breakpoint that leaves it ~116px, which is what keeps the menu narrow. */}
+      <ThemeToggle
+        className="fixed left-[calc(50%+24rem+0.75rem)] top-24 z-20 hidden lg:flex"
+        menuAlign="left"
+      />
       <Footer />
     </>
   );

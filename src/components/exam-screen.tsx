@@ -65,9 +65,11 @@ export default function ExamScreen() {
   const allAnswered = answered === total;
 
   return (
-    <div className="min-h-screen bg-stone-100 text-stone-900">
-      {/* ---- HUD (top, score on the right) ---- */}
-      <div className="sticky top-0 z-10 border-b border-stone-800 bg-stone-900 text-stone-100">
+    <div className="min-h-screen bg-background text-foreground">
+      {/* ---- HUD (top, score on the right) ----
+           Dark chrome in both themes, so its text keeps fixed stone values — only the
+           surface is tokenized, to stay distinguishable from an already-dark page. */}
+      <div className="sticky top-0 z-10 border-b border-hud-line bg-hud text-stone-100">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <button
@@ -102,7 +104,7 @@ export default function ExamScreen() {
               type="button"
               onClick={saveReport}
               title="Download (.txt) with the questions answered so far"
-              className="shrink-0 rounded border border-stone-700 px-2 py-1 font-mono text-[11px] text-stone-300 transition hover:border-stone-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              className="shrink-0 rounded border border-stone-700 px-2 py-1 font-mono text-[11px] text-stone-300 transition hover:border-stone-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
             >
               ↓ Save
             </button>
@@ -153,28 +155,28 @@ export default function ExamScreen() {
         <ScenarioDomains s={q.s} />
 
         {/* question */}
-        <div className="rounded-xl border border-stone-200 bg-white p-5 sm:p-6">
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
           <div className="mb-3 flex items-center gap-2">
             <DomainTag d={q.d} />
-            <span className="font-mono text-[11px] text-stone-400">TS {q.ts}</span>
+            <span className="font-mono text-[11px] text-foreground-faint">TS {q.ts}</span>
           </div>
-          <p className="text-[15px] font-medium leading-relaxed text-stone-900">{q.q}</p>
+          <p className="text-[15px] font-medium leading-relaxed text-foreground">{q.q}</p>
 
           <div className="mt-4 space-y-2.5">
             {q.choices.map((c) => {
               const chosen = a?.selected === c.k;
               const isCorrect = c.k === q.correctKey;
-              let cls = "border-stone-200 bg-white hover:border-stone-400";
-              let badge = "border-stone-300 text-stone-500";
+              let cls = "border-border bg-card hover:border-border-hover";
+              let badge = "border-border-strong text-foreground-subtle";
               if (isAnswered) {
                 if (isCorrect) {
-                  cls = "border-emerald-300 bg-emerald-50";
-                  badge = "border-emerald-500 bg-emerald-500 text-white";
+                  cls = "border-success-border bg-success-surface";
+                  badge = "border-success bg-success text-white";
                 } else if (chosen) {
-                  cls = "border-rose-300 bg-rose-50";
-                  badge = "border-rose-500 bg-rose-500 text-white";
+                  cls = "border-destructive-border bg-destructive-surface";
+                  badge = "border-destructive bg-destructive text-white";
                 } else {
-                  cls = "border-stone-200 bg-white opacity-70";
+                  cls = "border-border bg-card opacity-70";
                 }
               }
               return (
@@ -191,7 +193,7 @@ export default function ExamScreen() {
                       }),
                     )
                   }
-                  className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${cls}${
+                  className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${cls}${
                     isAnswered ? " cursor-default" : ""
                   }`}
                 >
@@ -200,7 +202,7 @@ export default function ExamScreen() {
                   >
                     {isAnswered && isCorrect ? "✓" : isAnswered && chosen ? "✕" : c.k}
                   </span>
-                  <span className="text-sm leading-relaxed text-stone-800">{c.t}</span>
+                  <span className="text-sm leading-relaxed text-foreground">{c.t}</span>
                 </button>
               );
             })}
@@ -208,11 +210,11 @@ export default function ExamScreen() {
 
           {/* explanation */}
           {isAnswered && (
-            <div className="mt-4 rounded-lg border-l-4 border-stone-900 bg-stone-50 p-4">
-              <div className="font-mono text-[11px] font-semibold uppercase tracking-widest text-stone-500">
+            <div className="mt-4 rounded-lg border-l-4 border-foreground bg-muted p-4">
+              <div className="font-mono text-[11px] font-semibold uppercase tracking-widest text-foreground-subtle">
                 {a.correct ? "Correct" : `Correct answer: ${q.correctKey}`}
               </div>
-              <p className="mt-1.5 text-sm leading-relaxed text-stone-700">{q.exp}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-foreground-muted">{q.exp}</p>
             </div>
           )}
         </div>
@@ -223,10 +225,10 @@ export default function ExamScreen() {
             type="button"
             onClick={goPrev}
             disabled={idx === 0}
-            className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+            className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${
               idx === 0
-                ? "cursor-not-allowed border-stone-200 text-stone-300"
-                : "border-stone-300 text-stone-700 hover:border-stone-500"
+                ? "cursor-not-allowed border-border text-foreground-disabled"
+                : "border-border-strong text-foreground-muted hover:border-border-hover-strong"
             }`}
           >
             ← Previous
@@ -241,10 +243,10 @@ export default function ExamScreen() {
                 title={
                   allAnswered ? "Finish and see your results" : "Answer all questions to finish"
                 }
-                className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+                className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${
                   allAnswered
-                    ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
-                    : "cursor-not-allowed border-stone-200 text-stone-300"
+                    ? "border-success-strong bg-success-strong text-white hover:bg-success-strong-hover"
+                    : "cursor-not-allowed border-border text-foreground-disabled"
                 }`}
               >
                 See Results
@@ -253,7 +255,7 @@ export default function ExamScreen() {
             <button
               type="button"
               onClick={onNext}
-              className="rounded-lg bg-stone-900 px-6 py-3 font-semibold text-white transition hover:bg-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              className="rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
             >
               {isLast ? "See result" : "Next →"}
             </button>

@@ -26,7 +26,7 @@ export default function ScenarioTracker({
     <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
       {blocks.map((block) => (
         <div key={block.questions[0].index} className="flex flex-wrap items-center gap-1">
-          <span className="flex h-7 items-center rounded-md border border-stone-300 bg-stone-100 px-1.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-stone-500">
+          <span className="flex h-7 items-center rounded-md border border-border-strong bg-background px-1.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-foreground-subtle">
             S{block.s}
           </span>
           {block.questions.map((item, pos) => (
