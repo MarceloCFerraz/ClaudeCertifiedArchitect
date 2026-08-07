@@ -71,11 +71,16 @@ export default function ExamScreen() {
     if (leaveOpen || glossaryOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      // A term in the explanation is a focusable button, and so are a choice and its
-      // scissors: Enter on one of those already does its own thing and must not also
-      // act on the question behind it.
-      if (e.target instanceof HTMLElement && e.target.closest("[data-glossary-term],[data-choice]"))
-        return;
+      if (e.target instanceof HTMLElement) {
+        // A term in the explanation is a focusable button: Enter there opens its tooltip
+        // and must not also advance the question behind it.
+        if (e.target.closest("[data-glossary-term]")) return;
+        // A focused choice or scissors handles Enter itself, so the focused control
+        // wins — but only Enter. Swallowing the arrows as well would strand keyboard
+        // navigation on whichever choice was clicked last, since a choice now keeps
+        // focus instead of being disabled out from under it.
+        if (e.key === "Enter" && e.target.closest("[data-choice]")) return;
+      }
       if (e.key === "ArrowLeft") {
         if (idx > 0) dispatch(examActions.navigatedTo(idx - 1));
       } else if (e.key === "Enter" && canSubmitCurrent && qid) {
