@@ -87,11 +87,21 @@ See [`CLAUDE.md`](./CLAUDE.md) for the full question-authoring guide (schema, co
 
 ## Deploy
 
-The build is a fully static site (`dist/`), so any static host works:
+Live at **https://marcelocferraz.github.io/ClaudeCertifiedArchitect/**.
+
+Pushing to `main` runs `.github/workflows/deploy.yml`, which reuses the CI workflow
+(`check` + `typecheck` + `test`) and only publishes `dist/` to GitHub Pages once those
+pass. One-time setup: **Settings → Pages → Source → GitHub Actions**.
+
+Because this is a *project* site, production builds are served from `/ClaudeCertifiedArchitect/`
+— that prefix is the `base` in `vite.config.ts`. Change it if the repo is renamed, moved to a
+`<user>.github.io` repo, or put behind a custom domain (in those cases `base` becomes `/`).
+
+The build is a plain static bundle, so other hosts work with no config change beyond `base`:
 
 - **Vercel** — framework preset "Vite", build command `npm run build`, output dir `dist`.
 - **Netlify** — build command `npm run build`, publish dir `dist`.
-- **GitHub Pages / Cloudflare Pages / S3 + CloudFront** — upload the contents of `dist/`.
+- **Cloudflare Pages / S3 + CloudFront** — upload the contents of `dist/`.
 
 ## Disclaimer
 
