@@ -173,6 +173,18 @@ describe("two-step answering", () => {
     expect(exam.selections[q.id]).toBeUndefined();
   });
 
+  it("commits a pick left pending by a mode switch when it is clicked again", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "C", false));
+    // The reader flips to instant mode, then clicks the choice they had picked.
+    store.dispatch(chooseChoice(q.id, "C", true));
+
+    const { exam } = store.getState();
+    expect(exam.answers[q.id]).toEqual({ selected: "C", correct: "C" === q.correctKey });
+    expect(exam.selections[q.id]).toBeUndefined();
+  });
+
   it("banks the clock on an explicit submit, like an instant answer", () => {
     const store = startedStore();
     const q = store.getState().exam.questions[0];

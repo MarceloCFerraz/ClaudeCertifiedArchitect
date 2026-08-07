@@ -38,8 +38,14 @@ export const submitAnswer =
     crossed-out or already-answered choice live in one reducer instead of two places. */
 export const chooseChoice =
   (qid: string, key: string, commitNow: boolean, now = Date.now()) =>
-  (dispatch: AppDispatch) => {
-    dispatch(examActions.selectionMade({ qid, selected: key }));
+  (dispatch: AppDispatch, getState: () => RootState) => {
+    // Re-clicking a pick takes it back — except on a click that also commits, where
+    // taking it back first would leave nothing to submit and the click would do
+    // nothing at all. That is reachable: switching to instant mode mid-question
+    // leaves a pick pending, and clicking it is how you would expect to confirm it.
+    if (!commitNow || getState().exam.selections[qid] !== key) {
+      dispatch(examActions.selectionMade({ qid, selected: key }));
+    }
     if (commitNow) dispatch(submitAnswer(qid, now));
   };
 
