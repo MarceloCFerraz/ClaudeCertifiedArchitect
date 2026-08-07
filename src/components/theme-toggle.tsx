@@ -1,5 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { THEME_PREFERENCES, type ThemePreference } from "../lib/theme";
+import { Icon } from "./atoms";
 import { useTheme } from "./theme-provider";
 
 /** How long the pointer must rest on the button before the menu appears. Long enough
@@ -7,23 +8,6 @@ import { useTheme } from "./theme-provider";
 const HOVER_INTENT_MS = 300;
 /** Grace period so the pointer can cross the gap from button to menu without it closing. */
 const CLOSE_GRACE_MS = 150;
-
-function Icon({ children }: { children: ReactNode }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-4 w-4 shrink-0"
-    >
-      {children}
-    </svg>
-  );
-}
 
 const ICONS: Record<ThemePreference, ReactNode> = {
   system: (

@@ -1,4 +1,30 @@
+import type { ReactNode } from "react";
 import { DOMAINS } from "../data/domains";
+
+/** Wrapper for the hand-rolled inline SVGs. The attributes match Lucide's conventions,
+    so a path lifted from there renders identically without adding the dependency. */
+export function Icon({
+  children,
+  className = "h-4 w-4",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`shrink-0 ${className}`}
+    >
+      {children}
+    </svg>
+  );
+}
 
 export function DomainTag({ d }: { d: number }) {
   return (
