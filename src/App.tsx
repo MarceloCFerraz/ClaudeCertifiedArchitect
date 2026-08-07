@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import ExamScreen from "./components/exam-screen";
+import Footer from "./components/footer";
 import HomeScreen from "./components/home-screen";
 import ResultsScreen from "./components/results-screen";
 import { rebuildExam } from "./lib/session";
@@ -21,8 +22,15 @@ export default function App() {
     }
   }, [screen, config, seed, hasQuestions, dispatch]);
 
-  if (screen === "home") return <HomeScreen />;
-  if (!hasQuestions) return null; // briefly, while resuming a persisted run
-  if (screen === "results") return <ResultsScreen />;
-  return <ExamScreen />;
+  if (screen !== "home" && !hasQuestions) return null; // briefly, while resuming a persisted run
+
+  const screenEl =
+    screen === "home" ? <HomeScreen /> : screen === "results" ? <ResultsScreen /> : <ExamScreen />;
+
+  return (
+    <>
+      {screenEl}
+      <Footer />
+    </>
+  );
 }
