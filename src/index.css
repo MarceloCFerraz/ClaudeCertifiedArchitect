@@ -44,6 +44,13 @@
     --brand-on-surface: 15 74.6% 27.8%; /* orange-900 */
     --brand-on-surface-muted: 15 79.1% 33.7%; /* orange-800 */
 
+    /* Domains get their own hue because scenarios already own the brand orange and the
+       two labels sit next to each other. Deliberately teal rather than another emerald:
+       green already carries a meaning here — `--success-text` marks a correct answer —
+       so this leans as far toward blue as the green family allows while still reading
+       as green against the warm palette. */
+    --domain: 175.3 77.4% 26.1%; /* teal-700 */
+
     --success: 160.1 84.1% 39.4%; /* emerald-500 */
     --success-strong: 161.4 93.5% 30.4%; /* emerald-600 */
     --success-strong-hover: 162.9 93.5% 24.3%; /* emerald-700 */
@@ -96,6 +103,10 @@
     --brand-border: 22 45% 28%;
     --brand-on-surface: 31 97% 80%;
     --brand-on-surface-muted: 31 95% 70%;
+
+    /* Lifted to read on a dark card, but kept darker and more saturated than
+       `--success-text` (emerald-300) so the two stay apart in dark mode too. */
+    --domain: 172.5 66% 50.4%; /* teal-400 */
 
     --success: 160.1 84.1% 39.4%;
     --success-strong: 161.4 93.5% 33%;

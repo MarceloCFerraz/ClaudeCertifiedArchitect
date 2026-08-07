@@ -1,17 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Answers, ExamConfig, PreparedQuestion, Screen, Session } from "../lib/types";
-
-export interface ExamState {
-  screen: Screen;
-  config: ExamConfig | null;
-  seed: number | null;
-  session: Session | null;
-  questions: PreparedQuestion[]; // not persisted — rebuilt from (config, seed) on resume
-  idx: number;
-  answers: Answers;
-  timed: boolean;
-  remaining: number; // seconds left when timed
-}
+import { foldClock } from "../lib/exam-clock";
+import type { ExamConfig, ExamState, PausedRun, PreparedQuestion, Session } from "../lib/types";
 
 export interface ExamStartedPayload {
   config: ExamConfig;
@@ -19,7 +8,7 @@ export interface ExamStartedPayload {
   session: Session;
   questions: PreparedQuestion[];
   timed: boolean;
-  remaining: number;
+  remainingSeconds: number;
 }
 
 const initialState: ExamState = {
@@ -31,7 +20,9 @@ const initialState: ExamState = {
   idx: 0,
   answers: {},
   timed: false,
-  remaining: 0,
+  elapsedSeconds: 0,
+  remainingSeconds: 0,
+  runningSince: null,
 };
 
 const examSlice = createSlice({
@@ -39,17 +30,22 @@ const examSlice = createSlice({
   initialState,
   reducers: {
     examStarted(state, action: PayloadAction<ExamStartedPayload>) {
-      const { config, seed, session, questions, timed, remaining } = action.payload;
+      const { config, seed, session, questions, timed, remainingSeconds } = action.payload;
       state.config = config;
       state.seed = seed;
       state.session = session;
       state.questions = questions;
       state.timed = timed;
-      state.remaining = remaining;
+      state.remainingSeconds = remainingSeconds;
+      state.elapsedSeconds = 0;
+      state.runningSince = session.createdAt;
       state.idx = 0;
       state.answers = {};
       state.screen = "exam";
     },
+    /* `selected` is the positional letter the shuffle assigned, so an answer only means
+       anything alongside the draw it was given for — which is why the draw travels with
+       the run and is never regenerated. */
     answered(state, action: PayloadAction<{ qid: string; selected: string; correct: boolean }>) {
       const { qid, selected, correct } = action.payload;
       if (!state.answers[qid]) state.answers[qid] = { selected, correct };
@@ -59,17 +55,40 @@ const examSlice = createSlice({
       if (max < 0) return;
       state.idx = Math.max(0, Math.min(action.payload, max));
     },
-    decrementTimer(state) {
-      if (state.remaining > 0) state.remaining -= 1;
+    /** Start a fresh segment, discarding any unbanked time. Used at boot: the stored
+        `runningSince` predates the tab closing, and counting that gap would burn a
+        timed budget while the app wasn't even open. */
+    clockResumed(state, action: PayloadAction<number>) {
+      state.runningSince = action.payload;
     },
-    questionsRebuilt(state, action: PayloadAction<PreparedQuestion[]>) {
-      state.questions = action.payload;
+    /** Bank the segment so far and start a new one. Dispatched alongside each answer so
+        the persisted clock is never staler than the last question — closing the tab then
+        loses at most one question's worth of time instead of the whole sitting. */
+    clockCheckpointed(state, action: PayloadAction<number>) {
+      const now = action.payload;
+      Object.assign(state, foldClock(state, now));
+      state.runningSince = now;
     },
-    finished(state) {
+    examResumed(state, action: PayloadAction<{ run: PausedRun; now: number }>) {
+      const { run, now } = action.payload;
+      state.config = run.config;
+      state.seed = run.seed;
+      state.session = run.session;
+      state.questions = run.questions;
+      state.timed = run.timed;
+      state.elapsedSeconds = run.elapsedSeconds;
+      state.remainingSeconds = run.remainingSeconds;
+      state.runningSince = now;
+      state.idx = run.idx;
+      state.answers = run.answers;
+      state.screen = "exam";
+    },
+    finished(state, action: PayloadAction<number>) {
+      Object.assign(state, foldClock(state, action.payload));
       state.screen = "results";
     },
-    exitedToHome(state) {
-      state.screen = "home";
+    examCleared() {
+      return initialState;
     },
   },
 });

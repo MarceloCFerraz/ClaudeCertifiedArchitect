@@ -83,6 +83,8 @@ export default {
           "on-surface": token("brand-on-surface"),
           "on-surface-muted": token("brand-on-surface-muted"),
         },
+        // Domain labels, kept off the brand orange that marks scenarios.
+        domain: token("domain"),
         success: {
           DEFAULT: token("success"),
           strong: token("success-strong"),

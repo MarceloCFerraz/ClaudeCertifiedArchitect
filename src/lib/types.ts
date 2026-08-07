@@ -30,12 +30,50 @@ export interface AnswerRecord {
 
 export type Answers = Record<string, AnswerRecord>;
 
+/** Wall-clock bookkeeping for a run. Time is never counted by ticking a stored
+    counter: `runningSince` marks when the live segment began, and elapsed/remaining
+    are derived from it, so a closed tab or a throttled background timer cannot
+    silently drift. A parked run has `runningSince === null` — its clock is stopped. */
+export interface ExamClock {
+  timed: boolean;
+  elapsedSeconds: number; // completed segments only
+  remainingSeconds: number; // budget left as of `runningSince`; 0 when untimed
+  runningSince: number | null; // epoch ms this segment started; null when parked
+}
+
 export interface Session {
   label: string;
   fileType: string;
   count: number;
   createdAt: number; // epoch ms (serializable for Redux/persist)
   timed: boolean;
+}
+
+/** The live run. Lives here rather than in the slice so `src/lib/` helpers can take
+    it without importing from `src/store/`. */
+export interface ExamState extends ExamClock {
+  screen: Screen;
+  config: ExamConfig | null;
+  seed: number | null;
+  session: Session | null;
+  questions: PreparedQuestion[];
+  idx: number;
+  answers: Answers;
+}
+
+/** A run parked mid-way. It carries its own draw: the questions are replayed exactly
+    as they were dealt and are never rebuilt from the seed, so editing the bank cannot
+    re-point a stored answer — `AnswerRecord.selected` is a positional letter assigned
+    after the shuffle — at different text. */
+export interface PausedRun extends ExamClock {
+  id: string; // `${session.fileType}-${session.createdAt}` — stable across pause → resume → pause
+  config: ExamConfig;
+  seed: number;
+  session: Session;
+  questions: PreparedQuestion[];
+  idx: number;
+  answers: Answers;
+  pausedAt: number; // epoch ms
 }
 
 export interface AttemptDomain {

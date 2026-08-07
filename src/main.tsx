@@ -4,22 +4,34 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import App from "./App";
 import { ErrorBoundary } from "./components/error-boundary";
+import { GlossaryProvider } from "./components/glossary-provider";
 import { ThemeProvider } from "./components/theme-provider";
 import "./index.css";
 import { persistor, store } from "./store";
+import { bootActions } from "./store/boot";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element #root not found");
+
+/* Runs once the persisted state is back but before anything renders, so a restored
+   run is made coherent (or cleared) without ever being shown half-built. */
+function onBeforeLift() {
+  for (const action of bootActions(store.getState(), Date.now())) store.dispatch(action);
+}
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
-        <Provider store={store}>
-          <PersistGate loading={null} persistor={persistor}>
-            <App />
-          </PersistGate>
-        </Provider>
+        {/* Outside the store provider on purpose: the glossary's open state is ephemeral
+            UI, and nothing about it should reach IndexedDB. */}
+        <GlossaryProvider>
+          <Provider store={store}>
+            <PersistGate loading={null} persistor={persistor} onBeforeLift={onBeforeLift}>
+              <App />
+            </PersistGate>
+          </Provider>
+        </GlossaryProvider>
       </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>,

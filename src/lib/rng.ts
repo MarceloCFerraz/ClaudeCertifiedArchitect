@@ -1,7 +1,7 @@
 import type { Rng } from "./exam-builder";
 
-/** Deterministic seedable PRNG (mulberry32) — lets a stored seed reproduce an
-    exact exam draw, so an in-progress run resumes without persisting questions. */
+/** Deterministic seedable PRNG (mulberry32) — keeps draws and shuffles reproducible
+    from a recorded seed, which is what makes the exam builder testable. */
 export function createRng(seed: number): Rng {
   let a = seed >>> 0;
   return () => {

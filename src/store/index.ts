@@ -18,15 +18,18 @@ import {
 } from "redux-persist";
 import examReducer from "./exam-slice";
 import historyReducer from "./history-slice";
+import pausedReducer from "./paused-slice";
 
 localforage.config({ name: "cca-f-practice", storeName: "state" });
 
-// The ongoing run persists compactly: questions are rebuilt from (config, seed),
-// so they are excluded here rather than serialized to IndexedDB.
+// A run stores its own draw. Rebuilding it from (config, seed) would be smaller, but a
+// seed only reproduces the same questions against the same bank — edit questions.json
+// and the stored answers, which are positional letters, would silently re-point at
+// different text. Runs are written rarely (per answer, not per second), so the size is
+// paid once and the exam a user resumes is always the exam they were given.
 const examPersistConfig = {
   key: "exam",
   storage: localforage,
-  blacklist: ["questions"],
 };
 
 const historyPersistConfig = {
@@ -34,9 +37,15 @@ const historyPersistConfig = {
   storage: localforage,
 };
 
+const pausedPersistConfig = {
+  key: "paused",
+  storage: localforage,
+};
+
 const rootReducer = combineReducers({
   exam: persistReducer(examPersistConfig, examReducer),
   history: persistReducer(historyPersistConfig, historyReducer),
+  paused: persistReducer(pausedPersistConfig, pausedReducer),
 });
 
 export const store = configureStore({
@@ -54,7 +63,11 @@ export const persistor = persistStore(store);
 // Types derive from the unpersisted slices so they match a plain store (used in
 // tests) — there is no nested `_persist` key to account for, and thunks/selectors
 // never read it.
-const typeRootReducer = combineReducers({ exam: examReducer, history: historyReducer });
+const typeRootReducer = combineReducers({
+  exam: examReducer,
+  history: historyReducer,
+  paused: pausedReducer,
+});
 export type RootState = ReturnType<typeof typeRootReducer>;
 export type AppDispatch = ThunkDispatch<RootState, undefined, UnknownAction> &
   Dispatch<UnknownAction>;

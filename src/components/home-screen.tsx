@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { DOMAINS } from "../data/domains";
+import { GLOSSARY } from "../data/glossary";
 import { BANK } from "../data/questions";
 import { SCENARIOS } from "../data/scenarios";
 import type { ExamConfig } from "../lib/types";
 import { useAppDispatch } from "../store/hooks";
 import { startExam } from "../store/thunks";
 import { Bar, DomainTag } from "./atoms";
+import { useGlossary } from "./glossary-provider";
 import { HistoryPanel } from "./history-panel";
+import { PausedPanel } from "./paused-panel";
 
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
+  const { openGlossary } = useGlossary();
   const [timerEnabled, setTimerEnabled] = useState(false);
   // The full mock is always timed; the toggle adds a 2-min/question timer to other modes.
   const start = (config: ExamConfig) => dispatch(startExam({ ...config, timed: timerEnabled }));
@@ -29,6 +33,29 @@ export default function HomeScreen() {
           and a live score in the top-right corner.
         </p>
 
+        {/* First thing after the intro: the vocabulary is what stops a newcomer before
+            any of the practice modes can help them. Kept in the neutral card style so it
+            does not compete with the mock exam, which is still the primary action. */}
+        <button
+          type="button"
+          onClick={openGlossary}
+          className="group mt-6 flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 text-left transition hover:border-border-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
+        >
+          <span>
+            <span className="block font-mono text-xs uppercase tracking-widest text-brand">
+              Glossary
+            </span>
+            <span className="mt-1 block text-sm text-foreground-muted">
+              {GLOSSARY.length} terms the exam takes for granted, one sentence each — and underlined
+              wherever they come up.
+            </span>
+          </span>
+          <span className="font-mono text-sm text-foreground-faint transition group-hover:translate-x-0.5">
+            ▶
+          </span>
+        </button>
+
+        <PausedPanel />
         <HistoryPanel />
 
         {/* rules of the real exam */}
@@ -56,7 +83,7 @@ export default function HomeScreen() {
           <div className="mt-3 space-y-2.5">
             {[1, 2, 3, 4, 5].map((d) => (
               <div key={d} className="flex items-center gap-3">
-                <span className="w-10 shrink-0 font-mono text-sm font-semibold text-brand">
+                <span className="w-10 shrink-0 font-mono text-sm font-semibold text-domain">
                   D{d}
                 </span>
                 <span className="flex-1 text-sm text-foreground-muted">{DOMAINS[d].name}</span>

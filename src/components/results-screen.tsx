@@ -6,11 +6,14 @@ import { examActions } from "../store/exam-slice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { startExam } from "../store/thunks";
 import { Bar, DomainTag } from "./atoms";
+import { useGlossary } from "./glossary-provider";
+import GlossaryText from "./glossary-text";
 
 const WEAK_THRESHOLD = 70;
 
 export default function ResultsScreen() {
   const dispatch = useAppDispatch();
+  const { openGlossary } = useGlossary();
   const questions = useAppSelector((s) => s.exam.questions);
   const answers = useAppSelector((s) => s.exam.answers);
   const config = useAppSelector((s) => s.exam.config);
@@ -77,7 +80,7 @@ export default function ResultsScreen() {
               const weak = p < WEAK_THRESHOLD;
               return (
                 <div key={domain} className="flex items-center gap-3">
-                  <span className="w-10 shrink-0 font-mono text-sm font-semibold text-brand">
+                  <span className="w-10 shrink-0 font-mono text-sm font-semibold text-domain">
                     D{domain}
                   </span>
                   <span className="flex-1 text-sm text-foreground-muted">
@@ -105,9 +108,20 @@ export default function ResultsScreen() {
         {/* missed review */}
         {missed.length > 0 && (
           <div className="mt-6 rounded-xl border border-border bg-card p-5">
-            <h2 className="font-mono text-xs uppercase tracking-widest text-foreground-faint">
-              Review · {missed.length} to review
-            </h2>
+            {/* The glossary sits with the explanations rather than in the button row at
+                the foot of the page — this is the text people are actually stuck on. */}
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-mono text-xs uppercase tracking-widest text-foreground-faint">
+                Review · {missed.length} to review
+              </h2>
+              <button
+                type="button"
+                onClick={openGlossary}
+                className="font-mono text-[11px] text-foreground-faint transition hover:text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
+              >
+                Glossary
+              </button>
+            </div>
             <div className="mt-4 space-y-5">
               {missed.map((q) => {
                 const a = answers[q.id];
@@ -131,8 +145,8 @@ export default function ResultsScreen() {
                     <p className="mt-1 text-sm text-success-text">
                       <span className="font-mono">{q.correctKey}.</span> {right?.t}
                     </p>
-                    <p className="mt-2 rounded-md bg-muted p-3 text-sm text-foreground-muted">
-                      {q.exp}
+                    <p className="mt-2 rounded-md bg-muted p-3 text-sm leading-relaxed text-foreground-muted">
+                      <GlossaryText text={q.exp} />
                     </p>
                   </div>
                 );
@@ -158,7 +172,7 @@ export default function ResultsScreen() {
           </button>
           <button
             type="button"
-            onClick={() => dispatch(examActions.exitedToHome())}
+            onClick={() => dispatch(examActions.examCleared())}
             className="rounded-lg border border-border-strong px-5 py-3 font-semibold transition hover:border-border-hover-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
           >
             Back to start

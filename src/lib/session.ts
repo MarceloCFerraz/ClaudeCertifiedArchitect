@@ -10,12 +10,13 @@ export interface NewExam {
   questions: PreparedQuestion[];
   session: Session;
   timed: boolean;
-  remaining: number;
+  remainingSeconds: number;
 }
 
 /** Build a fresh exam run (impure: seeds from Math.random and stamps the clock).
-    The seed is kept so the same draw can be rebuilt on resume. The full mock is
-    always timed; other modes are timed only when the user opts in. */
+    The seed records which draw was dealt; the draw itself is kept with the run and
+    never regenerated. The full mock is always timed; other modes are timed only
+    when the user opts in. */
 export function createExamSession(config: ExamConfig): NewExam {
   const seed = randomSeed();
   const questions = buildExam(config, createRng(seed));
@@ -27,11 +28,6 @@ export function createExamSession(config: ExamConfig): NewExam {
     createdAt: Date.now(),
     timed,
   };
-  const remaining = timed ? questions.length * SECONDS_PER_QUESTION : 0;
-  return { seed, questions, session, timed, remaining };
-}
-
-/** Reproduce an exam's questions from its persisted (config, seed). */
-export function rebuildExam(config: ExamConfig, seed: number): PreparedQuestion[] {
-  return buildExam(config, createRng(seed));
+  const remainingSeconds = timed ? questions.length * SECONDS_PER_QUESTION : 0;
+  return { seed, questions, session, timed, remainingSeconds };
 }

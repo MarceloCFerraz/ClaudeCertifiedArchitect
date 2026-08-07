@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { DOMAINS } from "../data/domains";
 import { SCENARIOS } from "../data/scenarios";
+import { ANNOTATE_ALL } from "../lib/glossary-terms";
 import { DomainTag } from "./atoms";
+import GlossaryText from "./glossary-text";
 
 export default function ScenarioDomains({ s }: { s: number }) {
   const [open, setOpen] = useState(false);
@@ -26,11 +28,18 @@ export default function ScenarioDomains({ s }: { s: number }) {
         <dl className="mt-2 space-y-2 rounded-lg border border-border bg-card p-3">
           {domains.map((d) => (
             <div key={d}>
-              <dt className="text-sm font-semibold text-foreground">
-                D{d} · {DOMAINS[d].name} · {DOMAINS[d].weight}%
+              {/* Same heading treatment as ScenarioCard — mono label, name in the body
+                  face, weight back in mono so it reads as a value — but in the domain
+                  blue, since a scenario heading in brand orange sits just above it. */}
+              <dt className="flex flex-wrap items-baseline gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-widest text-domain">
+                  Domain {d}
+                </span>
+                <span className="text-sm font-semibold text-foreground">{DOMAINS[d].name}</span>
+                <span className="font-mono text-[11px] text-domain">{DOMAINS[d].weight}%</span>
               </dt>
-              <dd className="mt-0.5 text-sm leading-relaxed text-foreground-muted">
-                {DOMAINS[d].description}
+              <dd className="mt-1 text-sm leading-relaxed text-foreground-muted">
+                <GlossaryText text={DOMAINS[d].description} max={ANNOTATE_ALL} />
               </dd>
             </div>
           ))}

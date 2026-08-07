@@ -37,11 +37,39 @@ npm test           # Jest unit/logic tests
 
 Tick **Timed · 2 min/question** before starting to add a countdown to any mode (the full mock is always timed). A timed run that expires jumps to the results screen with your partial answers preserved.
 
+## Pausing and resuming
+
+Need to stop halfway? Hit **✕** in the exam header and choose **Pause & exit**. The run moves to a **Paused exams** card on the home screen, where you can **Resume** it exactly where you left off — same questions, same order, same answers — or **Delete** it. Several runs can sit there at once, so starting a drill never costs you a half-finished mock. Choosing **Discard** instead throws the run away immediately.
+
+The clock stops while a run is paused, for both the countdown on a timed exam and the time recorded in your history, so a bathroom break doesn't cost you the exam.
+
+A paused run keeps its own copy of the questions it was dealt and always replays that copy, even if `questions.json` changed in the meantime. When it no longer matches the current bank, the card says how many questions were removed or edited — the run still resumes exactly as drawn, so it's up to you whether to finish it or delete it and start fresh.
+
+## Glossary
+
+The exam leans on vocabulary it never stops to define — *synthesis*, *fan-out*,
+*idempotent*, *subagent*. The **Glossary** card on the home screen opens a browsable list
+of 80-odd terms in plain English: search as you type, or click through A–Z.
+
+You don't have to go looking for it. Terms are <u>underlined</u> where you meet them —
+in the scenario and domain framing above each question, and in the explanation after you
+answer. Hover, tap, or Tab to one and its definition appears without taking you off the
+question. During a run the **Glossary** button in the exam header opens the full list as
+an overlay, so looking something up never costs you your place (the clock keeps running,
+as it would in the real exam). The results screen has one too, in the header of the
+review list.
+
+Never the question itself or its options — highlighting some words and not others would
+hint at the answer. The scenario framing is safe because it is identical for every
+question in that scenario.
+
 ## Scoring, persistence & history
 
 - The **scaled score is weighted by domain**: each domain's hit-rate is weighted by its official exam weight (renormalized over the domains present), then scaled to 100–1000. It's a faithful estimate, not Anthropic's proprietary scaling.
-- An **in-progress exam survives a refresh** — state is persisted to IndexedDB (via redux-persist) and the exact question draw is rebuilt from a stored seed.
-- Finished exams are kept as a compact **history** (score, per-domain summary, completion time) shown on the home screen, including your average score and average completion time.
+- An **in-progress exam survives a refresh** — the run, including its question draw, is persisted to IndexedDB via redux-persist.
+- Finished exams are kept as a compact **history** (score, per-domain summary, time on task) shown on the home screen, including your average score and average completion time.
+
+> Everything is stored per-browser, and two tabs of the app share that storage without knowing about each other — the last one to write wins. Keep it to one tab if you have runs you care about.
 
 ## Saving results
 
@@ -72,7 +100,7 @@ Real-exam reference: 60 questions, 120 minutes, passing score 720/1000.
 └── src
     ├── main.tsx         # entry: Provider + PersistGate + ErrorBoundary
     ├── App.tsx          # routes on the current screen
-    ├── data/            # questions.json + domains/scenarios + Zod schema
+    ├── data/            # questions.json + glossary.json + domains/scenarios + Zod schemas
     ├── lib/             # pure logic: exam-builder, scoring, report, session, …
     ├── store/           # Redux Toolkit slices, thunks, persistence
     ├── components/      # screens + atoms
@@ -83,7 +111,12 @@ Real-exam reference: 60 questions, 120 minutes, passing score 720/1000.
 
 All questions live in `src/data/questions.json`, validated against the Zod schema in `src/data/schema.ts`. After any change, run `npm test` — the schema test rejects malformed entries (missing fields, not exactly one correct choice, bad domain/scenario refs, too few questions to fill a weighted mock).
 
-See [`CLAUDE.md`](./CLAUDE.md) for the full question-authoring guide (schema, conventions, quality bar) and `references/` for the source material to ground new questions in.
+The glossary lives alongside it in `src/data/glossary.json`, under the same rules — its
+own Zod schema, its own test. Adding a term that starts matching common words will fail
+the build: a test runs the real matcher over every explanation in the bank and rejects
+term lists that would turn them into stripes.
+
+See [`CLAUDE.md`](./CLAUDE.md) for the full question-authoring guide (schema, conventions, quality bar), the glossary contract, and `references/` for the source material to ground new questions in.
 
 ## Deploy
 

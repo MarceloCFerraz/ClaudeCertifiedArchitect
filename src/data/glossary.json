@@ -1,0 +1,456 @@
+[
+  {
+    "term": "Agent SDK",
+    "def": "Anthropic's toolkit for building agents that run tools in a loop, rather than answering a single question.",
+    "more": "It gives you the pieces an agentic application needs: an agent definition (name, system prompt, allowed tools), the loop that keeps calling tools until the model says it is done, subagent spawning, and hooks for intercepting tool calls."
+  },
+  {
+    "term": "Agentic loop",
+    "def": "The cycle where Claude asks for a tool, your code runs it and hands back the result, and Claude decides what to do next.",
+    "more": "The loop is model-driven: nothing in your code decides the order of steps, so the same agent handles a one-step request and a twenty-step one. The only reliable signal that it has finished is stop_reason reaching \"end_turn\" — not counting iterations, and not looking for the words \"task complete\" in the reply.",
+    "also": ["agent loop"]
+  },
+  {
+    "term": "Allowed tools",
+    "def": "The explicit list of tools an agent is permitted to call, which is also what stops it doing anything outside its job.",
+    "more": "A coordinator that needs to spawn subagents must have the Task tool on its list. Keeping the list short is not only a safety measure: fewer tools means fewer descriptions competing for the model's attention, and less context spent.",
+    "also": ["allowedTools", "allowed_tools"]
+  },
+  {
+    "term": "Anti-pattern",
+    "def": "A solution that looks reasonable and gets used often, but reliably causes the problem it was meant to prevent.",
+    "more": "Exam questions lean on these heavily, because the tempting wrong answer is usually a well-known anti-pattern: capping the agentic loop at a fixed iteration count, returning \"operation failed\" with no detail, retrying forever inside a subagent, or fixing a hard ordering requirement by shouting at the model in the system prompt."
+  },
+  {
+    "term": "Attention dilution",
+    "def": "The quality drop that happens when a model is handed too much at once, so some parts get a deep look and others get a glance.",
+    "more": "It is the reason a single pass over a fourteen-file pull request finds less than fourteen focused passes do: the review is deep on a few files, shallow on the rest, and inconsistent about which patterns it flags."
+  },
+  {
+    "term": "Attribution",
+    "def": "Keeping each claim tied to the source it came from, instead of melting several sources into unsourced prose.",
+    "also": ["attributed"]
+  },
+  {
+    "term": "Batch API",
+    "def": "An endpoint for submitting many requests at once for asynchronous processing, at half the cost of sending them one by one.",
+    "more": "The trade is latency: results arrive within a processing window of up to 24 hours, with no faster guarantee, and multi-turn tool calling is not supported. It suits overnight reports and bulk document runs, and is wrong for anything a person is sitting and waiting for.",
+    "also": ["Message Batches API", "Batches API"]
+  },
+  {
+    "term": "Built-in tool",
+    "def": "A tool Claude Code ships with — Read, Write, Edit, Bash, Grep, Glob — as opposed to one you supply through MCP.",
+    "more": "Agents tend to reach for these over an MCP tool that does something similar, so an MCP tool competing with a built-in one needs a description that says plainly what it offers that Read or Grep cannot."
+  },
+  {
+    "term": "CLAUDE.md",
+    "def": "The instruction file Claude Code loads automatically, carrying a project's standards, conventions and context.",
+    "more": "It resolves in three layers: user-level (~/.claude/CLAUDE.md, personal and never committed), project-level (checked in, so everyone on the team gets it), and directory-level (conventions for one part of the tree). Putting team standards in the user-level file is a classic mistake — a new teammate clones the repo and gets none of them."
+  },
+  {
+    "term": "Compaction",
+    "def": "Summarizing an over-long conversation so the work can continue in the space that frees up.",
+    "more": "Triggered with the /compact command in Claude Code. The cost is that summaries blur detail: exact figures, percentages and dates tend to come back as \"about\" and \"a few\", so anything precise should be written down somewhere durable first.",
+    "also": ["compacting"]
+  },
+  {
+    "term": "Confidence calibration",
+    "def": "Checking whether a model's stated confidence actually tracks how often it is right, and setting review thresholds from that.",
+    "more": "Uncalibrated self-reported confidence is a poor escalation trigger — a model can be confidently wrong. What works is measuring accuracy against a labelled set, per field and per document type, then routing low-confidence output to a human. An aggregate 97% can still hide 40% errors on one document type."
+  },
+  {
+    "term": "Context budget",
+    "def": "The slice of the context window one agent is allowed to consume, kept deliberately small so it cannot crowd out the rest.",
+    "more": "In a multi-agent system the coordinator acts as a separate context layer: each subagent gets only the material its task needs and returns a structured result rather than a raw dump, which stops one agent's verbose output leaking into everyone else's window."
+  },
+  {
+    "term": "Context window",
+    "def": "The total amount of text, counted in tokens, that Claude can take into account in a single request.",
+    "more": "It holds the system prompt, the entire message history, every tool definition and every tool result — which is why accumulated tool output is the usual reason a window fills up. Two failure modes follow: material in the middle of a long input gets less reliable attention than material at the ends, and once the window is full something has to be summarized away."
+  },
+  {
+    "term": "Continuous integration",
+    "def": "An automated pipeline that builds and checks every change as it is proposed, so problems surface before anyone merges them.",
+    "more": "Claude Code runs there in headless mode — one prompt in, a result out, nothing waiting for input — which is what makes automated review, test generation and pull-request feedback possible.",
+    "also": ["CI/CD", "CI"]
+  },
+  {
+    "term": "Coordinator",
+    "def": "The agent that splits a task up, decides which subagents to run, and puts their results back together.",
+    "more": "In the usual hub-and-spoke layout every subagent reports to the coordinator and never to each other, which is what makes the system observable and gives one place to handle failures. The coordinator also validates what comes back — a subagent that timed out and one that genuinely found nothing must not look the same.",
+    "also": ["orchestrator"]
+  },
+  {
+    "term": "custom_id",
+    "def": "The label you attach to each request in a batch so you can tell which response belongs to which input.",
+    "more": "Without it a partly-failed batch is unusable: with it you identify exactly which items failed, fix those, and resubmit only them rather than paying to reprocess the ones that already worked."
+  },
+  {
+    "term": "Decomposition",
+    "def": "Breaking one large task into smaller subtasks that can be worked on separately and then recombined.",
+    "also": ["task decomposition", "decompose", "decomposing"]
+  },
+  {
+    "term": "Deterministic",
+    "def": "Always producing the same result from the same input, with no chance of varying between runs.",
+    "more": "This is the dividing line the exam keeps testing. Code is deterministic; a model's response to a prompt is not. When a rule must hold every single time — a spending limit, a required verification step, an ordering constraint — it belongs in code or a hook, because no amount of emphatic prompt wording gets you from \"almost always\" to \"always\"."
+  },
+  {
+    "term": "Direct execution",
+    "def": "Letting Claude Code make changes straight away, without first producing a plan for you to approve.",
+    "more": "The right choice when the change is small and unambiguous — one file, a clear stack trace, a single validation check. Plan mode earns its overhead when the change is large, the codebase is unfamiliar, or several approaches are defensible."
+  },
+  {
+    "term": "Downstream",
+    "def": "Whatever consumes a system's output further along the chain — the next step, service or team that depends on it.",
+    "more": "It is the reason an extraction system's output shape matters as much as its accuracy: something further along is going to parse it, and a field that is sometimes a string and sometimes null breaks there rather than here."
+  },
+  {
+    "term": "Dynamic decomposition",
+    "def": "Working out the subtasks as you go, based on what earlier steps turned up, instead of fixing them in advance.",
+    "more": "The counterpart to a fixed pipeline. Use it for open-ended investigation where the scope only becomes clear once you start looking; use a fixed pipeline when the shape of the work is known and you want repeatability.",
+    "also": ["adaptive decomposition"]
+  },
+  {
+    "term": "Edge case",
+    "def": "An input or situation at the boundary of what a system expects, where the ordinary path tends to break.",
+    "more": "Worth naming explicitly in a tool description and worth an example in a prompt, because it is exactly where a model generalizing from the common case gets things wrong."
+  },
+  {
+    "term": "Enum",
+    "def": "A schema constraint listing the only values a field is allowed to take, such as \"critical\", \"high\", \"medium\", \"low\".",
+    "more": "Adding an \"other\" option with a free-text detail field stops data outside your categories being silently forced into the nearest one, and an \"unclear\" option lets the model admit uncertainty instead of guessing."
+  },
+  {
+    "term": "Escalation",
+    "def": "Handing a case to a human because the agent should not be the one to finish it.",
+    "more": "Good triggers are concrete: the customer asked for a person, policy does not cover the situation, the amount crosses a threshold, or repeated attempts have not moved things forward. Poor triggers are sentiment analysis and the model's own confidence score, neither of which tracks how hard the case actually is.",
+    "also": ["escalate", "escalating", "escalated"]
+  },
+  {
+    "term": "Exponential backoff",
+    "def": "Waiting longer before each successive retry, so a struggling service is not hammered while it recovers.",
+    "also": ["backoff"]
+  },
+  {
+    "term": "Extended thinking",
+    "def": "A mode where Claude works through a problem at length before answering, trading time and tokens for accuracy.",
+    "also": ["thinking budget"]
+  },
+  {
+    "term": "False positive",
+    "def": "Something reported as a problem that turns out not to be one.",
+    "more": "Automated review lives or dies on this rate: a reviewer that cries wolf often enough gets ignored wholesale, which is why explicit criteria for what to flag — and what not to — beat turning up the sensitivity."
+  },
+  {
+    "term": "Fan-out",
+    "def": "Launching several subagents at once from a single step, so their work overlaps instead of queueing.",
+    "more": "A coordinator can put several Task calls in one response and they run concurrently. The judgement call is how wide to go: a fixed wide fan-out wastes time and tokens on narrow questions, while a fixed narrow cap leaves broad questions half-covered — which is why breadth is usually assessed per query.",
+    "also": ["fan out"]
+  },
+  {
+    "term": "Few-shot prompting",
+    "def": "Putting two to four worked examples in the prompt to show the behaviour you want, rather than describing it.",
+    "more": "It beats adjectives because an example is unambiguous where \"be more precise\" is not, and the model generalizes the pattern rather than parroting the cases. It is especially strong for messy real-world input — informal quantities, inconsistent citation styles — where writing rules for every variation is hopeless.",
+    "also": ["few-shot", "few shot", "few-shot example"]
+  },
+  {
+    "term": "Fixed pipeline",
+    "def": "A workflow whose steps are decided in advance and run in the same order every time.",
+    "also": ["fixed pipelines"]
+  },
+  {
+    "term": "fork_session",
+    "def": "Splitting a session into independent branches that share everything up to the branch point and then diverge.",
+    "more": "Useful for trying two approaches against the same investigation without redoing the investigation, and for running a noisy side-quest without its output landing in the main thread."
+  },
+  {
+    "term": "Frontmatter",
+    "def": "The small YAML block at the top of a Markdown file that configures it, fenced off by triple-dashed lines.",
+    "more": "It is how a skill declares its allowed tools and whether it runs in a forked context, and how a file in .claude/rules/ declares the path patterns that decide when it loads."
+  },
+  {
+    "term": "Glob",
+    "def": "The tool that finds files by name pattern, such as every file matching src/components/**/*.ts.",
+    "more": "Reach for Glob when you know roughly what a file is called and Grep when you know what is inside it. The word also names the pattern syntax itself — a path glob like **/*.test.ts is what makes a rule file load only for the files it applies to."
+  },
+  {
+    "term": "Grep",
+    "def": "The tool that searches inside files for text — a function name, an error message, an import.",
+    "more": "The efficient way to explore an unfamiliar codebase is to alternate: Grep to find where something is defined, Read those files, Grep for who calls it, Read those, and so on, rather than reading everything up front."
+  },
+  {
+    "term": "Guardrail",
+    "def": "A constraint enforced outside the model's judgement, so a rule holds even when the model would have gone another way."
+  },
+  {
+    "term": "Hallucination",
+    "def": "A confident, fluent answer that is simply not true — an invented figure, a function that does not exist, a fabricated source.",
+    "more": "Schemas make this less likely but do not remove it: a required field pushes the model to produce something when the source says nothing, which is why fields that may genuinely be absent should be nullable."
+  },
+  {
+    "term": "Handoff",
+    "def": "The structured summary an agent passes to whoever picks the case up next, usually a human.",
+    "more": "The person receiving it does not get the conversation transcript — they get only this, so it has to stand on its own: who the customer is, what they want, what has already been tried, what you recommend, and why it is being escalated.",
+    "also": ["structured handoff", "hand off"]
+  },
+  {
+    "term": "Headless mode",
+    "def": "Running Claude Code non-interactively so it takes a prompt, prints a result and exits without waiting for anyone.",
+    "more": "Invoked with the -p (or --print) flag, and the only sensible way to run Claude Code inside CI. Adding --output-format json with a schema makes the result something a pipeline can parse and act on, such as posting review comments on a pull request.",
+    "also": ["headless"]
+  },
+  {
+    "term": "Hook",
+    "def": "Code that fires at a fixed point in the agent's lifecycle and can inspect, change or block what is happening.",
+    "more": "A PreToolUse hook runs before a tool call and can refuse it; a PostToolUse hook runs after and can reshape the result before the model ever sees it — normalizing date formats, or trimming a forty-field response down to the five fields that matter. Because it is ordinary code, it is deterministic, which is exactly why critical rules belong here rather than in the prompt."
+  },
+  {
+    "term": "Hub-and-spoke",
+    "def": "A layout where every subagent talks only to the central coordinator and never directly to another subagent.",
+    "more": "Routing everything through the hub is what gives you one place to observe progress, validate results and recover from failures — at the cost of the coordinator being the bottleneck and the single point of failure."
+  },
+  {
+    "term": "Human-in-the-loop",
+    "def": "Designing a workflow so a person reviews or approves the cases the system should not decide alone.",
+    "also": ["human in the loop"]
+  },
+  {
+    "term": "Idempotent",
+    "def": "Safe to run more than once: repeating the call leaves the world in the same state as running it a single time.",
+    "more": "It matters because retries are unavoidable. A retried idempotent refund produces one refund; a retried non-idempotent one may produce two, which is why the property has to be designed into the tool rather than assumed.",
+    "also": ["idempotency", "idempotence"]
+  },
+  {
+    "term": "isError",
+    "def": "The flag an MCP tool sets to tell the agent that a call failed rather than succeeded.",
+    "more": "Setting it is the easy part; what the agent needs is the detail alongside it — whether the failure is retryable, what was attempted, and whether anything partial survived. \"Operation failed\" leaves the coordinator with no basis to decide between retrying, rephrasing and escalating."
+  },
+  {
+    "term": "Isolated context",
+    "def": "A subagent starting with only what it was explicitly given, rather than inheriting the conversation that spawned it.",
+    "more": "This is the single most common source of subagent bugs. \"Analyze the document\" fails because there is no document in the subagent's context; the prompt has to carry the material, the relevant earlier findings, and the expected output shape.",
+    "also": ["context isolation"]
+  },
+  {
+    "term": "JSON Schema",
+    "def": "A machine-readable description of the shape data must take: which fields exist, of what type, and which are required.",
+    "more": "Pairing one with tool_use is the most reliable way to get structured output, because it guarantees the response parses and has the required fields. It guarantees nothing about whether the values are correct — that is a separate check."
+  },
+  {
+    "term": "Latency",
+    "def": "How long something takes end to end, from the request going out to the answer coming back."
+  },
+  {
+    "term": "Least privilege",
+    "def": "Giving an agent only the tools and access its job actually needs, and nothing beyond that.",
+    "also": ["principle of least privilege"]
+  },
+  {
+    "term": "Lost in the middle",
+    "def": "The tendency for a model to handle the start and end of a long input more reliably than the material buried in between.",
+    "more": "The practical response is to place what matters at the edges: headline findings at the top, the action items at the bottom, and the bulk detail in between.",
+    "also": ["lost-in-the-middle"]
+  },
+  {
+    "term": "max_tokens",
+    "def": "The ceiling on how long a single response may be, measured in tokens.",
+    "more": "Hitting it truncates the reply mid-flight and surfaces as stop_reason \"max_tokens\" — a distinct failure from the model choosing to stop, and one that needs a larger ceiling or a smaller task rather than a retry."
+  },
+  {
+    "term": "MCP",
+    "def": "An open protocol for plugging external systems into Claude, exposing tools to call, resources to read and prompt templates.",
+    "more": "The point of a protocol rather than bespoke integrations is that any MCP-speaking client can use any MCP server: connect one and its tools are discovered automatically, alongside those of every other connected server.",
+    "also": ["Model Context Protocol"]
+  },
+  {
+    "term": "MCP resource",
+    "def": "Data an MCP server offers for reading — a schema, a catalogue, a set of docs — without the agent taking any action.",
+    "more": "A resource hands the agent a map up front, so it does not have to spend exploratory tool calls working out what data exists before it can start."
+  },
+  {
+    "term": "MCP server",
+    "def": "A process that speaks MCP and exposes a set of tools and resources to whatever connects to it.",
+    "more": "Configured per project in .mcp.json (committed, so the whole team gets the same servers, with secrets referenced as environment variables rather than pasted in) or per user in the home directory for personal experiments. Prefer an existing community server for standard integrations and write your own only for genuinely team-specific workflows."
+  },
+  {
+    "term": "Model-driven",
+    "def": "Letting the model choose the next step from what it has seen, instead of following a decision tree fixed in your code.",
+    "also": ["model driven"]
+  },
+  {
+    "term": "Multi-agent",
+    "def": "An architecture where several specialized agents divide the work, rather than one agent doing everything.",
+    "also": ["multi agent"]
+  },
+  {
+    "term": "Orchestration",
+    "def": "Coordinating several agents or steps — deciding what runs, in what order, and what happens when part of it fails.",
+    "also": ["orchestrate", "orchestrating"]
+  },
+  {
+    "term": "Partial results",
+    "def": "The portion of a job that succeeded when the rest did not, kept and reported rather than thrown away.",
+    "more": "Abandoning an entire workflow because one subagent failed discards everything the others produced. The better pattern is to keep what came back, mark plainly which parts are incomplete, and let the reader see where the gaps are."
+  },
+  {
+    "term": "Pipeline",
+    "def": "A chain of steps where each one's output feeds the next, run end to end as a single flow."
+  },
+  {
+    "term": "Plan mode",
+    "def": "A mode where Claude Code investigates and proposes a plan for approval, without changing any files.",
+    "more": "It can read, search and explore, but not write, so exploring is risk-free. Worth the extra round trip when the change is large, the codebase is unfamiliar, or there are several defensible approaches; unnecessary overhead for a one-line fix with a clear stack trace.",
+    "also": ["planning mode"]
+  },
+  {
+    "term": "Probabilistic",
+    "def": "Working most of the time but not every time, because the outcome depends on a model's judgement rather than fixed logic.",
+    "more": "A well-written instruction might be followed 99 times in 100. That is fine for tone and formatting and unacceptable for a refund limit, and the gap between the two is the reason hooks exist."
+  },
+  {
+    "term": "Prompt caching",
+    "def": "Reusing the already-processed form of a repeated prompt prefix, so the unchanged part is not paid for again.",
+    "more": "It rewards putting the stable material — system prompt, tool definitions, reference documents — at the front and the varying material at the end, since the cache only holds up to the first difference."
+  },
+  {
+    "term": "Prompt chaining",
+    "def": "Splitting work into a sequence of focused prompts, each doing one thing, instead of asking for everything at once.",
+    "more": "Reviewing ten files one at a time and then doing a pass for cross-file issues beats one prompt holding all ten, because each file gets the model's full attention rather than a share of it."
+  },
+  {
+    "term": "Provenance",
+    "def": "The record of where a piece of information came from: which source, from when, and obtained how.",
+    "more": "It gets lost precisely when it matters most — during summarization, where \"the market is estimated at $3.2B, per the 2024 Global AI Music Report\" collapses into \"the market is estimated at $3.2B\". When two sources disagree, keeping both with their dates and methods is more useful than silently picking one."
+  },
+  {
+    "term": "Pull request",
+    "def": "A proposal to merge one line of code changes into another, opened for review and discussion before it lands.",
+    "more": "It is what code-review automation attaches to: a diff, a description and a comment thread that a reviewing agent can read and post into.",
+    "also": ["PR"]
+  },
+  {
+    "term": "Pydantic",
+    "def": "A Python library that validates data against a declared model and reports precisely which field broke which rule.",
+    "more": "In extraction pipelines it plays two roles: it generates the JSON Schema handed to the model, and it checks what comes back — including business rules like line items summing to the stated total — so a failure produces an error specific enough to retry against."
+  },
+  {
+    "term": "Rate limit",
+    "def": "A cap on how many requests a service will accept in a given period, past which it starts refusing them."
+  },
+  {
+    "term": "Retry with feedback",
+    "def": "Retrying a failed request with the previous attempt and the specific error included, rather than sending the same prompt again.",
+    "more": "Telling the model that total was 150 while the line items sum to 145 gives it something to correct. This fixes format, structure and arithmetic mistakes; it cannot fix missing information, because no amount of retrying puts data into a document that never had it.",
+    "also": ["retry-with-feedback"]
+  },
+  {
+    "term": "Scratchpad",
+    "def": "A file where an agent writes findings as it goes, so they survive summarization, a new session or a crash.",
+    "more": "It turns context from something you have to preserve into something you can rebuild: when the window degrades, the agent reads the scratchpad instead of redoing the investigation."
+  },
+  {
+    "term": "Self-correction",
+    "def": "Having the model produce both a stated value and its own computed check, so a mismatch between them shows up as data.",
+    "more": "Extracting a stated total of $150 alongside a calculated total of $145 and a conflict flag turns a silent error into a routable one, without needing a separate verification pass."
+  },
+  {
+    "term": "Semantic error",
+    "def": "Output that is structurally valid but wrong in substance — totals that do not add up, a value in the wrong field.",
+    "more": "Schemas cannot catch these, because the JSON is perfectly well-formed. Catching them takes validation against business rules, a retry carrying the specific error, or self-correction built into the output shape."
+  },
+  {
+    "term": "Session",
+    "def": "One continuous working conversation with its accumulated history, which can be saved, resumed or branched.",
+    "more": "Resuming is not always the right move: if files have changed since, the stored tool results are stale, and starting fresh with a short summary of what was found beats continuing on top of outdated observations."
+  },
+  {
+    "term": "Skill",
+    "def": "A packaged, on-demand instruction set in Claude Code, invoked by name and configured through its frontmatter.",
+    "more": "The frontmatter is what separates a skill from a plain prompt template: it can restrict which tools are available and run the whole thing in a forked context so verbose output never reaches the main session. Use a skill for something you invoke deliberately, and CLAUDE.md for standards that should always apply.",
+    "also": ["Agent Skill"]
+  },
+  {
+    "term": "Slash command",
+    "def": "A reusable prompt saved in the project or your home directory and invoked as /name.",
+    "more": "Kept in the project, everyone gets the same workflow on clone; kept in your home directory, it is personal and never committed."
+  },
+  {
+    "term": "stop_reason",
+    "def": "The field on a response saying why the model stopped: it finished, it wants a tool, it ran out of room, or it hit a stop sequence.",
+    "more": "This is what drives an agentic loop. \"tool_use\" means run the tool and come back; \"end_turn\" is the only trustworthy signal that the work is done — which is why inspecting the reply text for phrases like \"task complete\" is an anti-pattern."
+  },
+  {
+    "term": "Structured output",
+    "def": "Getting a response as data with a guaranteed shape, rather than as prose something downstream has to parse.",
+    "more": "The reliable route is a tool definition with a JSON Schema, which guarantees the response parses and carries the required fields. Correctness of the values is a separate problem."
+  },
+  {
+    "term": "Subagent",
+    "def": "A separate agent a coordinator spawns for one scoped task, which reports back and then goes away.",
+    "more": "Two properties define it. Its context is isolated, so everything it needs must be in the prompt that spawned it; and its verbose working — fifteen files read, a hundred matches scanned — never reaches the main conversation, which is what makes delegation a context-management technique and not just a parallelism one.",
+    "also": ["sub-agent", "sub agent"]
+  },
+  {
+    "term": "Syntax error",
+    "def": "Output that is malformed as data — unbalanced braces, a trailing comma, a field of the wrong type.",
+    "more": "This class of problem is fully solved by using tool_use with a JSON Schema, which is why exam answers offering more prompt instructions to fix malformed JSON are wrong."
+  },
+  {
+    "term": "Synthesis",
+    "def": "Pulling findings from several sources or subagents into one coherent answer, rather than listing them side by side.",
+    "more": "It is where multi-agent systems most often lose quality: attribution gets dropped, contradictions get quietly resolved by picking one number, and gaps in coverage stop being visible. A good synthesis keeps sources attached, surfaces conflicts instead of hiding them, and says plainly which parts are incomplete.",
+    "also": ["synthesize", "synthesizing", "synthesized", "synthesise"]
+  },
+  {
+    "term": "System prompt",
+    "def": "The instruction sent separately from the conversation that sets the model's role, constraints and output format.",
+    "more": "It takes priority over user messages and applies for the whole conversation. Its wording has side effects worth watching: an instruction to \"always verify the customer\" can push the model to call the verification tool in situations where it was never needed."
+  },
+  {
+    "term": "Task tool",
+    "def": "The tool a coordinator calls to spawn a subagent, passing it the prompt and context it should work from.",
+    "more": "It has to be on the coordinator's allowed-tools list or no delegation is possible. Several Task calls in one response run concurrently, which is how a fan-out happens.",
+    "annotate": false
+  },
+  {
+    "term": "temperature",
+    "def": "The setting controlling how much randomness there is in the model's word choice, from focused to varied.",
+    "more": "Lowering it to zero makes output far more consistent but not deterministic, and it is not an enforcement mechanism: a model at temperature 0 can follow an instruction consistently and still be consistently wrong about when the instruction applies."
+  },
+  {
+    "term": "Token",
+    "def": "The unit text is chopped into for a model — roughly a short word or a word fragment — and the unit everything is counted in.",
+    "more": "Context windows, response limits and pricing are all measured in tokens, which is why trimming a tool result that returns forty fields down to the five you need is a concrete saving and not just tidiness."
+  },
+  {
+    "term": "Tool definition",
+    "def": "The name, description and input schema that tell the model a tool exists and when it should reach for it.",
+    "more": "The description is the whole selection mechanism — the model has nothing else to go on — so it needs to say what the tool returns, what its inputs look like, its edge cases, and when to use it instead of the tool next to it. Two tools with near-identical descriptions will be confused with each other."
+  },
+  {
+    "term": "tool_choice",
+    "def": "The parameter deciding whether the model may pick a tool freely, must call some tool, or must call one you name.",
+    "more": "\"auto\" is the default; \"any\" forces a tool call, which is how you guarantee structured output; naming a specific tool forces a particular first step, such as extracting metadata before anything else can run."
+  },
+  {
+    "term": "tool_use",
+    "def": "The mechanism by which Claude requests a tool call: it emits a structured request, your code runs it and returns the result.",
+    "more": "The model never executes anything itself, which is what makes the boundary enforceable — your code decides whether a requested call actually happens."
+  },
+  {
+    "term": "Transient error",
+    "def": "A failure caused by passing conditions — a timeout, a 503, a dropped connection — that the same call may well survive next time.",
+    "more": "The category matters because it dictates the response: retry with backoff. A validation error needs the input fixed, a business-rule failure needs explaining to the user, and a permission failure needs escalating — retrying any of those just burns time.",
+    "also": ["transient"]
+  },
+  {
+    "term": "Turn",
+    "def": "One exchange in a conversation: a message in, and the response it produces.",
+    "annotate": false
+  },
+  {
+    "term": "Validation error",
+    "def": "A failure caused by the input being wrong — a bad format, a missing required field — which retrying unchanged will not fix."
+  }
+]

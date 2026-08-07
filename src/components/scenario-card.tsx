@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { SCENARIOS } from "../data/scenarios";
+import { ANNOTATE_ALL } from "../lib/glossary-terms";
+import GlossaryText from "./glossary-text";
 
 export default function ScenarioCard({ s }: { s: number }) {
   const [open, setOpen] = useState(true);
@@ -19,7 +21,13 @@ export default function ScenarioCard({ s }: { s: number }) {
         </span>
         <span className="font-semibold">{scenario.title}</span>
       </button>
-      {open && <p className="mt-2 text-sm text-foreground-muted">{scenario.blurb}</p>}
+      {/* The blurb is identical for every question in the scenario, so underlining it
+          carries no per-question signal — unlike the stem, which stays untouched. */}
+      {open && (
+        <p className="mt-2 text-sm leading-relaxed text-foreground-muted">
+          <GlossaryText text={scenario.blurb} max={ANNOTATE_ALL} />
+        </p>
+      )}
     </div>
   );
 }

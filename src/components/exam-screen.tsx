@@ -1,11 +1,15 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSaveReport } from "../hooks/use-save-report";
+import { remainingAt } from "../lib/exam-clock";
 import { fmtTime } from "../lib/format";
 import { scoreExam } from "../lib/scoring";
 import { examActions } from "../store/exam-slice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { finishExam } from "../store/thunks";
+import { answerQuestion, finishExam, pauseExam } from "../store/thunks";
 import { Bar, DomainTag } from "./atoms";
+import { useGlossary } from "./glossary-provider";
+import GlossaryText from "./glossary-text";
+import LeaveExamMenu from "./leave-exam-menu";
 import ScenarioCard from "./scenario-card";
 import ScenarioDomains from "./scenario-domains";
 import ScenarioTracker from "./scenario-tracker";
@@ -18,7 +22,15 @@ export default function ExamScreen() {
   const session = useAppSelector((s) => s.exam.session);
   const timed = useAppSelector((s) => s.exam.timed);
   const isMock = useAppSelector((s) => s.exam.config?.mode === "mock");
-  const remaining = useAppSelector((s) => s.exam.remaining);
+  const elapsedSeconds = useAppSelector((s) => s.exam.elapsedSeconds);
+  const remainingSeconds = useAppSelector((s) => s.exam.remainingSeconds);
+  const runningSince = useAppSelector((s) => s.exam.runningSince);
+  const { open: glossaryOpen, openGlossary } = useGlossary();
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  // The clock is derived from wall time rather than counted down in the store, so this
+  // tick only refreshes the display — it dispatches nothing and persists nothing.
+  const [now, setNow] = useState(() => Date.now());
+  const remaining = remainingAt({ timed, elapsedSeconds, remainingSeconds, runningSince }, now);
   const saveReport = useSaveReport();
 
   const total = questions.length;
@@ -34,10 +46,17 @@ export default function ExamScreen() {
     : () => dispatch(examActions.navigatedTo(idx + 1));
 
   /* keyboard: ←/→ navigate freely; Enter advances (no letter keys — they clashed with
-     Cmd/Ctrl+C). Advancing never auto-submits — finishing is an explicit click. */
+     Cmd/Ctrl+C). Advancing never auto-submits — finishing is an explicit click.
+     Silent while the leave menu or the glossary is open, or Enter would both pick a menu
+     item and advance the question behind it, and arrow keys typed into the glossary's
+     search box would walk the exam underneath the overlay. */
   useEffect(() => {
+    if (leaveOpen || glossaryOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // A term in the explanation is a focusable button: Enter there opens its tooltip
+      // and must not also advance the question behind it.
+      if (e.target instanceof HTMLElement && e.target.closest("[data-glossary-term]")) return;
       if (e.key === "ArrowLeft") {
         if (idx > 0) dispatch(examActions.navigatedTo(idx - 1));
       } else if ((e.key === "Enter" || e.key === "ArrowRight") && !isLast) {
@@ -46,17 +65,18 @@ export default function ExamScreen() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [idx, isLast, dispatch]);
+  }, [idx, isLast, leaveOpen, glossaryOpen, dispatch]);
 
-  /* timed mock countdown: ticks each second, auto-submits at 0 */
+  /* timed countdown: re-reads the wall clock each second so a throttled or backgrounded
+     tab catches up on wake instead of silently stalling, and submits once it runs out */
   useEffect(() => {
     if (!timed) return;
-    if (remaining <= 0) {
-      dispatch(finishExam());
-      return;
-    }
-    const t = setTimeout(() => dispatch(examActions.decrementTimer()), 1000);
-    return () => clearTimeout(t);
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [timed]);
+
+  useEffect(() => {
+    if (timed && remaining <= 0) dispatch(finishExam());
   }, [timed, remaining, dispatch]);
 
   if (!q) return null;
@@ -72,15 +92,16 @@ export default function ExamScreen() {
       <div className="sticky top-0 z-10 border-b border-hud-line bg-hud text-stone-100">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
-            <button
-              type="button"
-              onClick={() => dispatch(examActions.exitedToHome())}
-              className="shrink-0 font-mono text-xs text-stone-400 hover:text-stone-200 focus:outline-none"
-              title="Exit"
-              aria-label="Exit exam"
-            >
-              ✕
-            </button>
+            {/* Always asks, even with nothing answered yet: a run is its draw as much as
+                its answers — a mock you just started is a specific timed set worth coming
+                back to — and one button that sometimes asks and sometimes discards is
+                indistinguishable from a broken one. */}
+            <LeaveExamMenu
+              open={leaveOpen}
+              onOpenChange={setLeaveOpen}
+              onPause={() => dispatch(pauseExam())}
+              onDiscard={() => dispatch(examActions.examCleared())}
+            />
             <div className="min-w-0">
               <div className="font-mono text-[11px] uppercase tracking-widest text-stone-500">
                 CCA-F · {isMock ? "Mock exam" : "Practice"}
@@ -107,6 +128,18 @@ export default function ExamScreen() {
               className="shrink-0 rounded border border-stone-700 px-2 py-1 font-mono text-[11px] text-stone-300 transition hover:border-stone-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
             >
               ↓ Save
+            </button>
+            {/* The one solid fill in the HUD, so it cannot be missed among chrome that
+                is otherwise text and thin outlines. White on a saturated brand fill is
+                the documented exception to the token rule; the focus ring goes white and
+                offset, because an orange ring on an orange button is invisible. */}
+            <button
+              type="button"
+              onClick={openGlossary}
+              title="Look up a term without leaving the question"
+              className="shrink-0 rounded bg-brand-vivid px-2 py-1 font-mono text-[11px] font-semibold text-white transition hover:bg-brand-bright focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-hud"
+            >
+              Glossary
             </button>
           </div>
 
@@ -184,15 +217,7 @@ export default function ExamScreen() {
                   type="button"
                   key={c.k}
                   disabled={isAnswered}
-                  onClick={() =>
-                    dispatch(
-                      examActions.answered({
-                        qid: q.id,
-                        selected: c.k,
-                        correct: c.k === q.correctKey,
-                      }),
-                    )
-                  }
+                  onClick={() => dispatch(answerQuestion(q.id, c.k, c.k === q.correctKey))}
                   className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${cls}${
                     isAnswered ? " cursor-default" : ""
                   }`}
@@ -224,7 +249,9 @@ export default function ExamScreen() {
               >
                 {a.correct ? "Correct" : `Correct answer: ${q.correctKey}`}
               </div>
-              <p className="mt-1.5 text-sm leading-relaxed text-foreground-muted">{q.exp}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-foreground-muted">
+                <GlossaryText text={q.exp} />
+              </p>
             </div>
           )}
         </div>

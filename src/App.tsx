@@ -1,36 +1,38 @@
-import { useEffect } from "react";
 import ExamScreen from "./components/exam-screen";
 import Footer from "./components/footer";
+import GlossaryModal from "./components/glossary-modal";
+import GlossaryPage from "./components/glossary-page";
+import { useGlossary } from "./components/glossary-provider";
 import HomeScreen from "./components/home-screen";
 import ResultsScreen from "./components/results-screen";
 import ThemeToggle from "./components/theme-toggle";
-import { rebuildExam } from "./lib/session";
-import { examActions } from "./store/exam-slice";
-import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { useAppSelector } from "./store/hooks";
 
 export default function App() {
-  const dispatch = useAppDispatch();
   const screen = useAppSelector((s) => s.exam.screen);
-  const config = useAppSelector((s) => s.exam.config);
-  const seed = useAppSelector((s) => s.exam.seed);
-  const hasQuestions = useAppSelector((s) => s.exam.questions.length > 0);
+  const { open } = useGlossary();
 
-  // Resume after reload: redux-persist restores (config, seed) but not the
-  // questions, so rebuild the exact same draw deterministically.
-  useEffect(() => {
-    if (screen !== "home" && config && seed != null && !hasQuestions) {
-      dispatch(examActions.questionsRebuilt(rebuildExam(config, seed)));
-    }
-  }, [screen, config, seed, hasQuestions, dispatch]);
+  /* Page or overlay is decided by whether we are on the *home* screen, not by whether an
+     exam is running. That is what keeps a timed mock honest: when the clock runs out
+     mid-lookup the screen flips exam → results underneath, and both of those want the
+     overlay — so an open glossary stays an overlay instead of quietly becoming a full
+     page on top of the results. */
+  const asPage = open && screen === "home";
 
-  if (screen !== "home" && !hasQuestions) return null; // briefly, while resuming a persisted run
-
-  const screenEl =
-    screen === "home" ? <HomeScreen /> : screen === "results" ? <ResultsScreen /> : <ExamScreen />;
+  const screenEl = asPage ? (
+    <GlossaryPage />
+  ) : screen === "home" ? (
+    <HomeScreen />
+  ) : screen === "results" ? (
+    <ResultsScreen />
+  ) : (
+    <ExamScreen />
+  );
 
   return (
     <>
       {screenEl}
+      {open && !asPage && <GlossaryModal />}
       {/* Parked in the gutter beside the max-w-3xl column, below the exam HUD, so it
           never covers content. Narrower viewports have no gutter — Footer carries it.
           The menu aligns left so it opens away from the column, into empty gutter; at
