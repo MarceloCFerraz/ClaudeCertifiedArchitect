@@ -7,6 +7,7 @@ import { examActions } from "../store/exam-slice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { answerQuestion, finishExam, pauseExam } from "../store/thunks";
 import { Bar, DomainTag } from "./atoms";
+import ChoiceList from "./choice-list";
 import { useGlossary } from "./glossary-provider";
 import GlossaryText from "./glossary-text";
 import LeaveExamMenu from "./leave-exam-menu";
@@ -195,43 +196,11 @@ export default function ExamScreen() {
           </div>
           <p className="text-[15px] font-medium leading-relaxed text-foreground">{q.q}</p>
 
-          <div className="mt-4 space-y-2.5">
-            {q.choices.map((c) => {
-              const chosen = a?.selected === c.k;
-              const isCorrect = c.k === q.correctKey;
-              let cls = "border-border bg-card hover:border-border-hover";
-              let badge = "border-border-strong text-foreground-subtle";
-              if (isAnswered) {
-                if (isCorrect) {
-                  cls = "border-success-border bg-success-surface";
-                  badge = "border-success bg-success text-white";
-                } else if (chosen) {
-                  cls = "border-destructive-border bg-destructive-surface";
-                  badge = "border-destructive bg-destructive text-white";
-                } else {
-                  cls = "border-border bg-card opacity-70";
-                }
-              }
-              return (
-                <button
-                  type="button"
-                  key={c.k}
-                  disabled={isAnswered}
-                  onClick={() => dispatch(answerQuestion(q.id, c.k, c.k === q.correctKey))}
-                  className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${cls}${
-                    isAnswered ? " cursor-default" : ""
-                  }`}
-                >
-                  <span
-                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-bold ${badge}`}
-                  >
-                    {isAnswered && isCorrect ? "✓" : isAnswered && chosen ? "✕" : c.k}
-                  </span>
-                  <span className="text-sm leading-relaxed text-foreground">{c.t}</span>
-                </button>
-              );
-            })}
-          </div>
+          <ChoiceList
+            q={q}
+            answer={a}
+            onChoose={(key) => dispatch(answerQuestion(q.id, key, key === q.correctKey))}
+          />
 
           {/* explanation — carries the same green/red tone as the choice it belongs to */}
           {isAnswered && (

@@ -1,13 +1,8 @@
 import { useMemo } from "react";
+import { squareStatus } from "../lib/choice-state";
 import { scenarioBlocks } from "../lib/scenario-blocks";
 import type { Answers, PreparedQuestion } from "../lib/types";
-import { QuestionSquare, type SquareStatus } from "./atoms";
-
-function statusOf(answers: Answers, qid: string): SquareStatus {
-  const rec = answers[qid];
-  if (!rec) return "unanswered";
-  return rec.correct ? "correct" : "incorrect";
-}
+import { QuestionSquare } from "./atoms";
 
 export default function ScenarioTracker({
   questions,
@@ -33,7 +28,7 @@ export default function ScenarioTracker({
             <QuestionSquare
               key={item.q.id}
               label={String(pos + 1)}
-              status={statusOf(answers, item.q.id)}
+              status={squareStatus(answers[item.q.id])}
               current={item.index === current}
               onClick={() => onJump(item.index)}
               title={`Scenario ${block.s} · Q${pos + 1}`}

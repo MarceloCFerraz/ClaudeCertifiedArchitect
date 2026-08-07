@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { DOMAINS } from "../data/domains";
+import type { SquareStatus } from "../lib/choice-state";
 
 /** Wrapper for the hand-rolled inline SVGs. The attributes match Lucide's conventions,
     so a path lifted from there renders identically without adding the dependency. */
@@ -34,7 +35,11 @@ export function DomainTag({ d }: { d: number }) {
   );
 }
 
-export type SquareStatus = "unanswered" | "correct" | "incorrect";
+const SQUARE_TONE: Record<SquareStatus, string> = {
+  unanswered: "border-border-strong bg-card text-foreground-subtle hover:border-border-hover",
+  correct: "border-success bg-success text-white",
+  incorrect: "border-destructive bg-destructive text-white",
+};
 
 export function QuestionSquare({
   label,
@@ -49,12 +54,7 @@ export function QuestionSquare({
   onClick: () => void;
   title?: string;
 }) {
-  const tone =
-    status === "correct"
-      ? "border-success bg-success text-white"
-      : status === "incorrect"
-        ? "border-destructive bg-destructive text-white"
-        : "border-border-strong bg-card text-foreground-subtle hover:border-border-hover";
+  const tone = SQUARE_TONE[status];
   const ring = current ? " ring-2 ring-brand-vivid ring-offset-1 ring-offset-background" : "";
   return (
     <button
