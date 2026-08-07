@@ -38,6 +38,7 @@ function examState(over: Partial<ExamState> = {}): ExamState {
     questions: [pq("S1Q1"), pq("S1Q2")],
     idx: 1,
     answers: { S1Q1: { selected: "A", correct: true } },
+    selections: {},
     eliminations: {},
     timed: false,
     elapsedSeconds: 0,
@@ -59,6 +60,16 @@ describe("toPausedRun", () => {
   it("carries the crossed-out choices into the parked run", () => {
     const run = toPausedRun(examState({ eliminations: { S1Q2: ["B", "D"] } }), T0 + 60_000);
     expect(run?.eliminations).toEqual({ S1Q2: ["B", "D"] });
+  });
+
+  it("carries the pending picks into the parked run", () => {
+    const run = toPausedRun(examState({ selections: { S1Q2: "C" } }), T0 + 60_000);
+    expect(run?.selections).toEqual({ S1Q2: "C" });
+  });
+
+  it("counts only committed answers, not pending picks", () => {
+    const exam = examState({ selections: { S1Q2: "C" } });
+    expect(answeredCount(exam.answers)).toBe(1);
   });
 
   it("derives an id that survives a pause, resume and second pause", () => {

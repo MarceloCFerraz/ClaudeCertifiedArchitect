@@ -5,7 +5,9 @@ import { fmtTime } from "../lib/format";
 import { scoreExam } from "../lib/scoring";
 import { examActions } from "../store/exam-slice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { answerQuestion, finishExam, pauseExam } from "../store/thunks";
+import { chooseChoice, finishExam, pauseExam, submitAnswer } from "../store/thunks";
+import { useAnswerMode } from "./answer-mode-provider";
+import AnswerModeToggle from "./answer-mode-toggle";
 import { Bar, DomainTag } from "./atoms";
 import ChoiceList from "./choice-list";
 import { useGlossary } from "./glossary-provider";
@@ -24,7 +26,9 @@ export default function ExamScreen() {
   const questions = useAppSelector((s) => s.exam.questions);
   const idx = useAppSelector((s) => s.exam.idx);
   const answers = useAppSelector((s) => s.exam.answers);
+  const selections = useAppSelector((s) => s.exam.selections);
   const eliminations = useAppSelector((s) => s.exam.eliminations);
+  const { mode } = useAnswerMode();
   const session = useAppSelector((s) => s.exam.session);
   const timed = useAppSelector((s) => s.exam.timed);
   const isMock = useAppSelector((s) => s.exam.config?.mode === "mock");
@@ -46,32 +50,42 @@ export default function ExamScreen() {
 
   const q = questions[idx];
   const isLast = idx + 1 >= total;
+  const qid = q?.id;
+  // Derived before the effects below, which need them; the `if (!q)` bail-out comes
+  // after, so both are read defensively here.
+  const pending = qid ? selections[qid] : undefined;
+  const canSubmitCurrent = !!qid && !!pending && !answers[qid];
   const goPrev = () => dispatch(examActions.navigatedTo(idx - 1));
   const onNext = isLast
     ? () => dispatch(finishExam())
     : () => dispatch(examActions.navigatedTo(idx + 1));
 
-  /* keyboard: ←/→ navigate freely; Enter advances (no letter keys — they clashed with
-     Cmd/Ctrl+C). Advancing never auto-submits — finishing is an explicit click.
-     Silent while the leave menu or the glossary is open, or Enter would both pick a menu
-     item and advance the question behind it, and arrow keys typed into the glossary's
-     search box would walk the exam underneath the overlay. */
+  /* keyboard: ←/→ navigate freely; Enter submits the pick waiting on this question and
+     otherwise advances (no letter keys — they clashed with Cmd/Ctrl+C). Moving on never
+     auto-submits, so a pick can be left pending deliberately; finishing is always an
+     explicit click. Silent while the leave menu or the glossary is open, or Enter would
+     both pick a menu item and advance the question behind it, and arrow keys typed into
+     the glossary's search box would walk the exam underneath the overlay. */
   useEffect(() => {
     if (leaveOpen || glossaryOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      // A term in the explanation is a focusable button: Enter there opens its tooltip
-      // and must not also advance the question behind it.
-      if (e.target instanceof HTMLElement && e.target.closest("[data-glossary-term]")) return;
+      // A term in the explanation is a focusable button, and so are a choice and its
+      // scissors: Enter on one of those already does its own thing and must not also
+      // act on the question behind it.
+      if (e.target instanceof HTMLElement && e.target.closest("[data-glossary-term],[data-choice]"))
+        return;
       if (e.key === "ArrowLeft") {
         if (idx > 0) dispatch(examActions.navigatedTo(idx - 1));
+      } else if (e.key === "Enter" && canSubmitCurrent && qid) {
+        dispatch(submitAnswer(qid));
       } else if ((e.key === "Enter" || e.key === "ArrowRight") && !isLast) {
         dispatch(examActions.navigatedTo(idx + 1));
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [idx, isLast, leaveOpen, glossaryOpen, dispatch]);
+  }, [idx, isLast, leaveOpen, glossaryOpen, dispatch, qid, canSubmitCurrent]);
 
   /* timed countdown: re-reads the wall clock each second so a throttled or backgrounded
      tab catches up on wake instead of silently stalling, and submits once it runs out */
@@ -135,6 +149,7 @@ export default function ExamScreen() {
             >
               ↓ Save
             </button>
+            <AnswerModeToggle />
             {/* The one solid fill in the HUD, so it cannot be missed among chrome that
                 is otherwise text and thin outlines. White on a saturated brand fill is
                 the documented exception to the token rule; the focus ring goes white and
@@ -185,6 +200,7 @@ export default function ExamScreen() {
         <ScenarioTracker
           questions={questions}
           answers={answers}
+          selections={selections}
           current={idx}
           onJump={(i) => dispatch(examActions.navigatedTo(i))}
         />
@@ -203,12 +219,15 @@ export default function ExamScreen() {
 
           <ChoiceList
             q={q}
+            mode={mode}
             answer={a}
+            pending={pending}
             eliminated={eliminations[q.id] ?? EMPTY_ELIMINATIONS}
-            onChoose={(key) => dispatch(answerQuestion(q.id, key, key === q.correctKey))}
+            onChoose={(key) => dispatch(chooseChoice(q.id, key, mode === "instant"))}
             onToggleEliminate={(key) =>
               dispatch(examActions.eliminationToggled({ qid: q.id, key }))
             }
+            onSubmit={() => dispatch(submitAnswer(q.id))}
           />
 
           {/* explanation — carries the same green/red tone as the choice it belongs to */}

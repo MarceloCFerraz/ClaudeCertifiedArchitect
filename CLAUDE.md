@@ -95,12 +95,33 @@ revealed, scored, and counted toward finishing.** `scoreExam`, `answeredCount`, 
 and the tracker all read it as "answered" by mere existence, so nothing provisional may ever
 be written there. Working state lives in its own map beside it.
 
-`exam.eliminations` (`Record<qid, letter[]>`) is the reader's scratchpad: choices crossed out
-via the scissors under each letter badge. It never consults `correctKey` — that is what keeps
-the answer from leaking before the reveal — and it is not scored. Two shape rules the tests
-enforce: the letters are **sorted**, and a question with nothing crossed out carries **no
-entry at all** (`delete`, not `= undefined`, which survives in memory but vanishes through
-JSON and would make `qid in eliminations` disagree with itself across a reload).
+Two maps sit beside `answers`, keyed the same way:
+
+- `exam.selections` (`Record<qid, letter>`) — picks made but not submitted.
+- `exam.eliminations` (`Record<qid, letter[]>`) — choices crossed out via the scissors under
+  each letter badge; a scratchpad, never scored.
+
+Neither reducer ever consults `correctKey` — that is what keeps the answer from leaking
+before the reveal, and `test/unit/store.test.ts` asserts it directly. Two shape rules the
+tests also enforce: eliminated letters are **sorted**, and a question with nothing pending or
+crossed out carries **no entry at all** (`delete`, not `= undefined`, which survives in memory
+but vanishes through JSON and would make `qid in selections` disagree with itself across a
+reload).
+
+`src/lib/answer-mode.ts` decides what a *click* does, and that is the only thing it decides:
+`"instant"` commits on click (the original behaviour), `"submit"` leaves the pick pending.
+Both paths go through `chooseChoice` → `selectionMade` → `submitAnswer`, so the guards that
+refuse a crossed-out or already-answered choice live in one reducer rather than two call
+sites. A pick renders identically in both modes, and `showSubmitButton` keeps the button
+visible whenever something is pending — otherwise flipping to instant mid-run would strand a
+pick with no way to commit it.
+
+The mode is a **standing preference in `localStorage`, not store state** — and for a different
+reason than the theme's pre-paint one (there is no pre-paint script here, and it does not need
+one). It outlives runs: in the store it would be captured into a `PausedRun`, restored with
+it, and wiped by `examCleared`, so leaving one exam would silently reset how the next one
+answers. `AnswerModeProvider` sits outside the redux `Provider` in `src/main.tsx`, which is
+also what makes the HUD toggle and the home-screen checkbox two views of one value.
 
 Both maps ride along with a paused run, but they are **optional on `PausedRun`** — runs parked
 by an earlier build rehydrate verbatim out of the persisted array and simply lack them, so

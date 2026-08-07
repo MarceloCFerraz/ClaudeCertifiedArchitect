@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import App from "./App";
+import { AnswerModeProvider } from "./components/answer-mode-provider";
 import { ErrorBoundary } from "./components/error-boundary";
 import { GlossaryProvider } from "./components/glossary-provider";
 import { ThemeProvider } from "./components/theme-provider";
@@ -24,14 +25,18 @@ ReactDOM.createRoot(rootElement).render(
     <ErrorBoundary>
       <ThemeProvider>
         {/* Outside the store provider on purpose: the glossary's open state is ephemeral
-            UI, and nothing about it should reach IndexedDB. */}
-        <GlossaryProvider>
-          <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor} onBeforeLift={onBeforeLift}>
-              <App />
-            </PersistGate>
-          </Provider>
-        </GlossaryProvider>
+            UI, and nothing about it should reach IndexedDB. The answer mode is outside
+            for the opposite reason — it outlives every run, so it must not be parked
+            with one or cleared alongside one. */}
+        <AnswerModeProvider>
+          <GlossaryProvider>
+            <Provider store={store}>
+              <PersistGate loading={null} persistor={persistor} onBeforeLift={onBeforeLift}>
+                <App />
+              </PersistGate>
+            </Provider>
+          </GlossaryProvider>
+        </AnswerModeProvider>
       </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>,

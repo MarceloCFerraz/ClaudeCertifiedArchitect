@@ -39,6 +39,19 @@ Tick **Timed · 2 min/question** before starting to add a countdown to any mode 
 
 ## Answering a question
 
+By default, clicking a choice **selects** it — nothing is revealed and the score does not
+move — and a **Submit answer** button below the choices commits it. Click the same choice
+again to take the pick back. This is the default because reading a long question and
+pointing at whatever looks best so far shouldn't score it.
+
+If you prefer the answer the moment you click, flip the **⏎ Submit / ⚡ Instant** button in
+the exam header, or untick **Submit answers explicitly** on the home screen — they are the
+same setting, it can be changed mid-question, and it is remembered between visits. Switching
+never commits or discards a pick you have waiting.
+
+Questions with a pick still waiting show an orange square in the progress tracker, and the
+exam won't finish until every one of them is submitted.
+
 Every choice has a small **scissors** under its letter. Click it to rule that option out: the text is struck through and the option stops being selectable, which is the ordinary way to work a four-option question down to two. It is always reversible — click the scissors again to bring the option back — and crossing out has no effect on your score. Cross-outs are yours until you answer, then they stay on screen alongside the result, so ruling out what turned out to be the right answer is visible rather than quietly forgotten.
 
 ## Pausing and resuming

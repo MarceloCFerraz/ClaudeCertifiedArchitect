@@ -21,6 +21,28 @@ export const answerQuestion =
     dispatch(examActions.clockCheckpointed(now));
   };
 
+/** Commit whatever is pending on a question. A no-op when nothing is, which is what
+    makes it safe to fire from a keypress that may also have activated a button. */
+export const submitAnswer =
+  (qid: string, now = Date.now()) =>
+  (dispatch: AppDispatch, getState: () => RootState) => {
+    const { exam } = getState();
+    const selected = exam.selections[qid];
+    const question = exam.questions.find((q) => q.id === qid);
+    if (!selected || !question) return;
+    dispatch(answerQuestion(qid, selected, selected === question.correctKey, now));
+  };
+
+/** Register a click on a choice. Instant mode is "select, then commit in the same
+    breath" rather than a second path into `answered`, so the guards that refuse a
+    crossed-out or already-answered choice live in one reducer instead of two places. */
+export const chooseChoice =
+  (qid: string, key: string, commitNow: boolean, now = Date.now()) =>
+  (dispatch: AppDispatch) => {
+    dispatch(examActions.selectionMade({ qid, selected: key }));
+    if (commitNow) dispatch(submitAnswer(qid, now));
+  };
+
 /** Finish the run: record a compact history attempt (if anything was answered),
     then switch to the results screen. Used by the nav button and timer expiry. */
 export const finishExam =

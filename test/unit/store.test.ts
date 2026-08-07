@@ -1,14 +1,17 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { answeredCount } from "../../src/lib/paused-run";
+import { scoreExam } from "../../src/lib/scoring";
 import examReducer, { examActions } from "../../src/store/exam-slice";
 import historyReducer from "../../src/store/history-slice";
 import pausedReducer, { MAX_PAUSED, pausedActions } from "../../src/store/paused-slice";
 import {
   answerQuestion,
+  chooseChoice,
   finishExam,
   pauseExam,
   resumeRun,
   startExam,
+  submitAnswer,
 } from "../../src/store/thunks";
 
 const T0 = 1_700_000_000_000;
@@ -61,6 +64,162 @@ describe("exam store flow", () => {
     store.dispatch(finishExam());
     expect(store.getState().history.attempts).toHaveLength(0);
     expect(store.getState().exam.screen).toBe("results");
+  });
+});
+
+describe("two-step answering", () => {
+  function startedStore() {
+    const store = makeStore();
+    store.dispatch(startExam({ mode: "balanced", length: 12 }));
+    return store;
+  }
+
+  it("selects without answering", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "C", false));
+
+    const { exam } = store.getState();
+    expect(exam.selections[q.id]).toBe("C");
+    expect(exam.answers).toEqual({});
+  });
+
+  it("toggles the pick off when the same choice is picked twice", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "C", false));
+    store.dispatch(chooseChoice(q.id, "C", false));
+    expect(store.getState().exam.selections[q.id]).toBeUndefined();
+  });
+
+  it("replaces the pick when another choice is picked", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "C", false));
+    store.dispatch(chooseChoice(q.id, "A", false));
+    expect(store.getState().exam.selections[q.id]).toBe("A");
+  });
+
+  it("refuses to pick a choice that has been crossed out", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    store.dispatch(chooseChoice(q.id, "C", false));
+    expect(store.getState().exam.selections[q.id]).toBeUndefined();
+  });
+
+  it("drops the pick when its choice is crossed out", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "C", false));
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    expect(store.getState().exam.selections[q.id]).toBeUndefined();
+  });
+
+  it("keeps the pick when a different choice is crossed out", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "C", false));
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "A" }));
+    expect(store.getState().exam.selections[q.id]).toBe("C");
+  });
+
+  it("refuses to pick on a question already answered", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "A", true));
+    store.dispatch(chooseChoice(q.id, "C", false));
+    expect(store.getState().exam.selections[q.id]).toBeUndefined();
+    expect(store.getState().exam.answers[q.id].selected).toBe("A");
+  });
+
+  it("commits the pending pick and clears it", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, q.correctKey, false));
+    store.dispatch(submitAnswer(q.id));
+
+    const { exam } = store.getState();
+    expect(exam.answers[q.id]).toEqual({ selected: q.correctKey, correct: true });
+    expect(exam.selections[q.id]).toBeUndefined();
+  });
+
+  it("does nothing when asked to submit with nothing pending", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(submitAnswer(q.id));
+    expect(store.getState().exam.answers).toEqual({});
+  });
+
+  it("is a no-op when the same question is submitted twice", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "A", false));
+    store.dispatch(submitAnswer(q.id));
+    store.dispatch(submitAnswer(q.id));
+    expect(store.getState().exam.answers[q.id]).toEqual({
+      selected: "A",
+      correct: "A" === q.correctKey,
+    });
+  });
+
+  it("answers immediately when the click is set to commit", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, q.correctKey, true));
+
+    const { exam } = store.getState();
+    expect(exam.answers[q.id]).toEqual({ selected: q.correctKey, correct: true });
+    expect(exam.selections[q.id]).toBeUndefined();
+  });
+
+  it("banks the clock on an explicit submit, like an instant answer", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    const startedAt = store.getState().exam.runningSince ?? 0;
+    store.dispatch(chooseChoice(q.id, "A", false));
+    store.dispatch(submitAnswer(q.id, startedAt + 45_000));
+    expect(store.getState().exam.elapsedSeconds).toBe(45);
+  });
+
+  it("keeps a pending pick out of the score and the answered count", () => {
+    const store = startedStore();
+    const { questions } = store.getState().exam;
+    store.dispatch(chooseChoice(questions[0].id, questions[0].correctKey, false));
+
+    const { exam } = store.getState();
+    expect(scoreExam(exam.questions, exam.answers, "answered").answered).toBe(0);
+    expect(answeredCount(exam.answers)).toBe(0);
+  });
+
+  it("never looks at the correct answer when picking", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    const distractor = q.choices.find((c) => c.k !== q.correctKey)?.k ?? "A";
+    store.dispatch(chooseChoice(q.id, q.correctKey, false));
+    const afterCorrect = store.getState().exam.selections[q.id];
+    store.dispatch(chooseChoice(q.id, distractor, false));
+    const afterDistractor = store.getState().exam.selections[q.id];
+
+    expect(afterCorrect).toBe(q.correctKey);
+    expect(afterDistractor).toBe(distractor);
+    expect(store.getState().exam.answers).toEqual({});
+  });
+
+  it("leaves a pending pick unscored when the run finishes", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, q.correctKey, false));
+    store.dispatch(finishExam());
+    expect(store.getState().history.attempts).toHaveLength(0);
+  });
+
+  it("starts a fresh exam with nothing pending", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(chooseChoice(q.id, "C", false));
+    store.dispatch(startExam({ mode: "domain", domain: 2 }));
+    expect(store.getState().exam.selections).toEqual({});
   });
 });
 
@@ -188,27 +347,35 @@ describe("pausing and resuming", () => {
     expect(after.answers[q.id]).toEqual({ selected: q.correctKey, correct: true });
   });
 
-  it("carries the cross-outs across a pause and resume", () => {
+  it("carries the pending picks and cross-outs across a pause and resume", () => {
     const store = makeStore();
     store.dispatch(startExam({ mode: "balanced", length: 12 }));
     const q = store.getState().exam.questions[2];
     store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    store.dispatch(chooseChoice(q.id, "A", false));
     store.dispatch(pauseExam(T0));
 
-    expect(store.getState().paused.runs[0].eliminations).toEqual({ [q.id]: ["C"] });
-    store.dispatch(resumeRun(store.getState().paused.runs[0].id, T0 + 1_000));
-    expect(store.getState().exam.eliminations).toEqual({ [q.id]: ["C"] });
+    const parked = store.getState().paused.runs[0];
+    expect(parked.eliminations).toEqual({ [q.id]: ["C"] });
+    expect(parked.selections).toEqual({ [q.id]: "A" });
+
+    store.dispatch(resumeRun(parked.id, T0 + 1_000));
+    const { exam } = store.getState();
+    expect(exam.eliminations).toEqual({ [q.id]: ["C"] });
+    expect(exam.selections).toEqual({ [q.id]: "A" });
   });
 
-  it("restores a run parked before cross-outs existed", () => {
+  it("restores a run parked before picks and cross-outs existed", () => {
     const store = makeStore();
     store.dispatch(startExam({ mode: "balanced", length: 12 }));
     store.dispatch(pauseExam(T0));
-    const { eliminations, ...legacy } = store.getState().paused.runs[0];
+    const { eliminations, selections, ...legacy } = store.getState().paused.runs[0];
     expect(eliminations).toBeDefined();
+    expect(selections).toBeDefined();
 
     store.dispatch(examActions.examResumed({ run: legacy, now: T0 + 1_000 }));
     expect(store.getState().exam.eliminations).toEqual({});
+    expect(store.getState().exam.selections).toEqual({});
   });
 
   it("takes the run off the paused list once resumed", () => {

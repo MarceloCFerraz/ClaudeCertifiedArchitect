@@ -1,9 +1,13 @@
-import { type ChoiceState, choiceState } from "../lib/choice-state";
+import type { AnswerMode } from "../lib/answer-mode";
+import { type ChoiceState, choiceState, showSubmitButton } from "../lib/choice-state";
 import type { AnswerRecord, PreparedChoice, PreparedQuestion } from "../lib/types";
 import { Icon } from "./atoms";
 
+/* A pending pick is brand orange rather than green or red: any success/destructive
+   tone before the reveal would read as a verdict on the choice. */
 const ROW_TONE: Record<ChoiceState, string> = {
   idle: "border-border bg-card hover:border-border-hover",
+  selected: "border-brand-border bg-brand-surface",
   eliminated: "border-border-subtle bg-muted",
   correct: "border-success-border bg-success-surface",
   incorrect: "border-destructive-border bg-destructive-surface",
@@ -12,6 +16,7 @@ const ROW_TONE: Record<ChoiceState, string> = {
 
 const BADGE_TONE: Record<ChoiceState, string> = {
   idle: "border-border-strong text-foreground-subtle",
+  selected: "border-brand-vivid bg-brand-vivid text-white",
   eliminated: "border-border text-foreground-faint",
   correct: "border-success bg-success text-white",
   incorrect: "border-destructive bg-destructive text-white",
@@ -20,6 +25,7 @@ const BADGE_TONE: Record<ChoiceState, string> = {
 
 const TEXT_TONE: Record<ChoiceState, string> = {
   idle: "text-foreground",
+  selected: "text-brand-on-surface",
   eliminated: "text-foreground-faint",
   correct: "text-foreground",
   incorrect: "text-foreground",
@@ -108,29 +114,51 @@ function ChoiceRow({
 
 export default function ChoiceList({
   q,
+  mode,
   answer,
+  pending,
   eliminated,
   onChoose,
   onToggleEliminate,
+  onSubmit,
 }: {
   q: PreparedQuestion;
+  mode: AnswerMode;
   answer?: AnswerRecord;
+  pending?: string;
   eliminated: readonly string[];
   onChoose: (key: string) => void;
   onToggleEliminate: (key: string) => void;
+  onSubmit: () => void;
 }) {
+  const ctx = { correctKey: q.correctKey, answer, pending, eliminated };
   return (
     <div className="mt-4 space-y-2.5">
       {q.choices.map((c) => (
         <ChoiceRow
           key={c.k}
           choice={c}
-          state={choiceState({ correctKey: q.correctKey, answer, eliminated }, c.k)}
+          state={choiceState(ctx, c.k)}
           answered={!!answer}
           onChoose={() => onChoose(c.k)}
           onToggleEliminate={() => onToggleEliminate(c.k)}
         />
       ))}
+      {showSubmitButton(mode, ctx) && (
+        <button
+          type="button"
+          disabled={!pending}
+          onClick={onSubmit}
+          title={pending ? "Commit this answer and see the explanation" : "Pick an option first"}
+          className={`w-full rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${
+            pending
+              ? "border-brand-vivid bg-brand-vivid text-white hover:border-brand-bright hover:bg-brand-bright"
+              : "cursor-not-allowed border-border text-foreground-disabled"
+          }`}
+        >
+          {pending ? `Submit answer · ${pending}` : "Submit answer"}
+        </button>
+      )}
     </div>
   );
 }

@@ -37,6 +37,9 @@ export function DomainTag({ d }: { d: number }) {
 
 const SQUARE_TONE: Record<SquareStatus, string> = {
   unanswered: "border-border-strong bg-card text-foreground-subtle hover:border-border-hover",
+  // Brand orange, never green or red: a square for a pick that has not been submitted
+  // must not hint at whether it was the right one.
+  selected: "border-brand-vivid bg-brand-surface text-brand-on-surface",
   correct: "border-success bg-success text-white",
   incorrect: "border-destructive bg-destructive text-white",
 };

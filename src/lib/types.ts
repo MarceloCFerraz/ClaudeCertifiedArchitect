@@ -28,7 +28,15 @@ export interface AnswerRecord {
   correct: boolean;
 }
 
+/** Committed answers only. The *presence* of a key here is what every reader takes to
+    mean "answered" — it reveals the explanation, scores the question and counts toward
+    finishing — so nothing provisional may ever be written here. Uncommitted picks live
+    in `Selections`. */
 export type Answers = Record<string, AnswerRecord>;
+
+/** Picks made but not yet submitted, by question id. A question with no pending pick
+    carries no entry; see the note on `Eliminations` for why that matters. */
+export type Selections = Record<string, string>;
 
 /** Choices the reader has ruled out, by question id — a scratchpad, never scored.
     The letters are kept sorted so one logical state always serializes to the same
@@ -66,6 +74,7 @@ export interface ExamState extends ExamClock {
   questions: PreparedQuestion[];
   idx: number;
   answers: Answers;
+  selections: Selections;
   eliminations: Eliminations;
 }
 
@@ -83,6 +92,7 @@ export interface PausedRun extends ExamClock {
   answers: Answers;
   // Optional because runs parked by an earlier build are rehydrated verbatim out of
   // the persisted array and simply do not have them. `examResumed` defaults them.
+  selections?: Selections;
   eliminations?: Eliminations;
   pausedAt: number; // epoch ms
 }

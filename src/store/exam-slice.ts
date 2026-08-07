@@ -19,6 +19,7 @@ const initialState: ExamState = {
   questions: [],
   idx: 0,
   answers: {},
+  selections: {},
   eliminations: {},
   timed: false,
   elapsedSeconds: 0,
@@ -42,6 +43,7 @@ const examSlice = createSlice({
       state.runningSince = session.createdAt;
       state.idx = 0;
       state.answers = {};
+      state.selections = {};
       state.eliminations = {};
       state.screen = "exam";
     },
@@ -50,7 +52,21 @@ const examSlice = createSlice({
        the run and is never regenerated. */
     answered(state, action: PayloadAction<{ qid: string; selected: string; correct: boolean }>) {
       const { qid, selected, correct } = action.payload;
-      if (!state.answers[qid]) state.answers[qid] = { selected, correct };
+      if (state.answers[qid]) return;
+      state.answers[qid] = { selected, correct };
+      delete state.selections[qid];
+    },
+    /* A pick is not an answer. Like `eliminationToggled` this never consults
+       `correctKey`, so nothing about how the question scores is observable until the
+       reader commits — which is the whole point of the two-step flow. */
+    selectionMade(state, action: PayloadAction<{ qid: string; selected: string }>) {
+      const { qid, selected } = action.payload;
+      if (state.answers[qid]) return;
+      if (state.eliminations[qid]?.includes(selected)) return;
+      // Picking the same choice again takes it back: pointing at an option has to be
+      // undoable, or "select without committing" only solves half the problem.
+      if (state.selections[qid] === selected) delete state.selections[qid];
+      else state.selections[qid] = selected;
     },
     /* Crossing a choice out is a scratchpad, not an answer: it never consults
        `correctKey`, so nothing about how the question scores can leak before the
@@ -65,6 +81,9 @@ const examSlice = createSlice({
         : [...current, key].sort();
       if (next.length === 0) delete state.eliminations[qid];
       else state.eliminations[qid] = next;
+      // Ruling out the option you had picked takes the pick back with it — a pending
+      // answer you have just crossed out is not a state worth being able to reach.
+      if (state.selections[qid] === key && next.includes(key)) delete state.selections[qid];
     },
     navigatedTo(state, action: PayloadAction<number>) {
       const max = state.questions.length - 1;
@@ -97,6 +116,7 @@ const examSlice = createSlice({
       state.runningSince = now;
       state.idx = run.idx;
       state.answers = run.answers;
+      state.selections = run.selections ?? {};
       state.eliminations = run.eliminations ?? {};
       state.screen = "exam";
     },

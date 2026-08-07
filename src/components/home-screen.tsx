@@ -6,6 +6,7 @@ import { SCENARIOS } from "../data/scenarios";
 import type { ExamConfig } from "../lib/types";
 import { useAppDispatch } from "../store/hooks";
 import { startExam } from "../store/thunks";
+import { useAnswerMode } from "./answer-mode-provider";
 import { Bar, DomainTag } from "./atoms";
 import { useGlossary } from "./glossary-provider";
 import { HistoryPanel } from "./history-panel";
@@ -14,6 +15,7 @@ import { PausedPanel } from "./paused-panel";
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
   const { openGlossary } = useGlossary();
+  const { mode, setMode } = useAnswerMode();
   const [timerEnabled, setTimerEnabled] = useState(false);
   // The full mock is always timed; the toggle adds a 2-min/question timer to other modes.
   const start = (config: ExamConfig) => dispatch(startExam({ ...config, timed: timerEnabled }));
@@ -103,24 +105,42 @@ export default function HomeScreen() {
 
         {/* mode picker */}
         <div className="mt-6 rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <h2 className="font-mono text-xs uppercase tracking-widest text-foreground-faint">
               Choose how to practice
             </h2>
-            <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-foreground-muted">
-              <input
-                type="checkbox"
-                checked={timerEnabled}
-                onChange={(e) => setTimerEnabled(e.target.checked)}
-                className="h-4 w-4 accent-brand-vivid"
-              />
-              <span>
-                Timed · 2 min/question
-                <span className="ml-1 text-xs text-foreground-faint">
-                  (the full mock is always timed)
+            <div className="flex flex-col gap-1.5">
+              <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-foreground-muted">
+                <input
+                  type="checkbox"
+                  checked={timerEnabled}
+                  onChange={(e) => setTimerEnabled(e.target.checked)}
+                  className="h-4 w-4 accent-brand-vivid"
+                />
+                <span>
+                  Timed · 2 min/question
+                  <span className="ml-1 text-xs text-foreground-faint">
+                    (the full mock is always timed)
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+              {/* Unlike the timer this is not folded into the config at start time — it
+                  is a standing preference, and the exam header can flip it mid-run. */}
+              <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-foreground-muted">
+                <input
+                  type="checkbox"
+                  checked={mode === "submit"}
+                  onChange={(e) => setMode(e.target.checked ? "submit" : "instant")}
+                  className="h-4 w-4 accent-brand-vivid"
+                />
+                <span>
+                  Submit answers explicitly
+                  <span className="ml-1 text-xs text-foreground-faint">
+                    (pick first, then confirm)
+                  </span>
+                </span>
+              </label>
+            </div>
           </div>
 
           <div className="mt-4 space-y-3">

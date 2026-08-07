@@ -16,6 +16,7 @@ export function toPausedRun(exam: ExamState, now: number): PausedRun | null {
     questions,
     idx: exam.idx,
     answers: exam.answers,
+    selections: exam.selections,
     eliminations: exam.eliminations,
     pausedAt: now,
     ...foldClock(exam, now),
