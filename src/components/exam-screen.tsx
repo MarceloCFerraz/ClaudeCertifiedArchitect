@@ -10,6 +10,7 @@ import { useAnswerMode } from "./answer-mode-provider";
 import AnswerModeToggle from "./answer-mode-toggle";
 import { Bar, DomainTag } from "./atoms";
 import ChoiceList from "./choice-list";
+import ExamNav from "./exam-nav";
 import { useGlossary } from "./glossary-provider";
 import GlossaryText from "./glossary-text";
 import LeaveExamMenu from "./leave-exam-menu";
@@ -263,51 +264,15 @@ export default function ExamScreen() {
 
         {/* nav: free movement; finishing is always an explicit click, and never lands
             on a question whose answer was picked but never submitted */}
-        <div className="mt-5 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={idx === 0}
-            className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${
-              idx === 0
-                ? "cursor-not-allowed border-border text-foreground-disabled"
-                : "border-border-strong text-foreground-muted hover:border-border-hover-strong"
-            }`}
-          >
-            ← Previous
-          </button>
-
-          <div className="flex items-center gap-2">
-            {!isLast && (
-              <button
-                type="button"
-                onClick={() => dispatch(finishExam())}
-                disabled={!allAnswered}
-                title={finishTitle}
-                className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${
-                  allAnswered
-                    ? "border-success-strong bg-success-strong text-white hover:bg-success-strong-hover"
-                    : "cursor-not-allowed border-border text-foreground-disabled"
-                }`}
-              >
-                See Results
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={isLast && !allAnswered}
-              title={isLast ? finishTitle : undefined}
-              className={`rounded-lg px-6 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${
-                isLast && !allAnswered
-                  ? "cursor-not-allowed border border-border text-foreground-disabled"
-                  : "bg-primary text-primary-foreground hover:bg-primary-hover"
-              }`}
-            >
-              {isLast ? "See result" : "Next →"}
-            </button>
-          </div>
-        </div>
+        <ExamNav
+          isFirst={idx === 0}
+          isLast={isLast}
+          allAnswered={allAnswered}
+          finishTitle={finishTitle}
+          onPrev={goPrev}
+          onNext={onNext}
+          onFinish={() => dispatch(finishExam())}
+        />
       </div>
     </div>
   );
