@@ -103,6 +103,14 @@ export default function ExamScreen() {
   const a = answers[q.id];
   const isAnswered = !!a;
   const allAnswered = answered === total;
+  /* Both finish buttons carry the same gate. The last question used to be an escape
+     hatch out of a partly-answered run, which was already inconsistent with the
+     mid-exam button — and with a pick that can now sit unsubmitted, an ungated
+     "See result" would quietly score it as never answered. */
+  const outstanding = total - answered;
+  const finishTitle = allAnswered
+    ? "Finish and see your results"
+    : `${outstanding} question${outstanding === 1 ? "" : "s"} still to submit`;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -253,7 +261,8 @@ export default function ExamScreen() {
           )}
         </div>
 
-        {/* nav: free movement; finishing is always an explicit click */}
+        {/* nav: free movement; finishing is always an explicit click, and never lands
+            on a question whose answer was picked but never submitted */}
         <div className="mt-5 flex items-center justify-between">
           <button
             type="button"
@@ -274,9 +283,7 @@ export default function ExamScreen() {
                 type="button"
                 onClick={() => dispatch(finishExam())}
                 disabled={!allAnswered}
-                title={
-                  allAnswered ? "Finish and see your results" : "Answer all questions to finish"
-                }
+                title={finishTitle}
                 className={`rounded-lg border px-5 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${
                   allAnswered
                     ? "border-success-strong bg-success-strong text-white hover:bg-success-strong-hover"
@@ -289,7 +296,13 @@ export default function ExamScreen() {
             <button
               type="button"
               onClick={onNext}
-              className="rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
+              disabled={isLast && !allAnswered}
+              title={isLast ? finishTitle : undefined}
+              className={`rounded-lg px-6 py-3 font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid ${
+                isLast && !allAnswered
+                  ? "cursor-not-allowed border border-border text-foreground-disabled"
+                  : "bg-primary text-primary-foreground hover:bg-primary-hover"
+              }`}
             >
               {isLast ? "See result" : "Next →"}
             </button>
