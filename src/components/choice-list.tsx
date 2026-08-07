@@ -46,21 +46,25 @@ const BADGE_GLYPH: Partial<Record<ChoiceState, string>> = {
 const ROW_MIN_HEIGHT = "min-h-[4.75rem]";
 const SCISSORS_POSITION = "left-[1.125rem] top-[2.625rem]";
 
+/* `struck` is passed separately rather than read off `state`, because the reveal
+   states replace "eliminated" once an answer is in — and a cross-out has to outlive
+   that, so ruling the right answer out reads as correct *and* struck through. */
 function ChoiceRow({
   choice,
   state,
+  struck,
   answered,
   onChoose,
   onToggleEliminate,
 }: {
   choice: PreparedChoice;
   state: ChoiceState;
+  struck: boolean;
   answered: boolean;
   onChoose: () => void;
   onToggleEliminate: () => void;
 }) {
-  const isEliminated = state === "eliminated";
-  const locked = answered || isEliminated;
+  const locked = answered || state === "eliminated";
   return (
     <div className="relative">
       {/* The choice button comes first so Tab reaches the option before its cross-out,
@@ -81,7 +85,7 @@ function ChoiceRow({
           {BADGE_GLYPH[state] ?? choice.k}
         </span>
         <span
-          className={`text-sm leading-relaxed ${TEXT_TONE[state]}${isEliminated ? " line-through" : ""}`}
+          className={`text-sm leading-relaxed ${TEXT_TONE[state]}${struck ? " line-through" : ""}`}
         >
           {choice.t}
         </span>
@@ -92,12 +96,12 @@ function ChoiceRow({
         type="button"
         data-choice
         disabled={answered}
-        aria-pressed={isEliminated}
+        aria-pressed={struck}
         aria-label={`Cross out choice ${choice.k}`}
-        title={isEliminated ? "Bring this option back" : "Rule this option out"}
+        title={struck ? "Bring this option back" : "Rule this option out"}
         onClick={onToggleEliminate}
         className={`absolute ${SCISSORS_POSITION} flex h-5 w-5 items-center justify-center rounded transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid disabled:cursor-default ${
-          isEliminated
+          struck
             ? "text-destructive-text hover:bg-destructive-surface"
             : "text-foreground-faint hover:bg-foreground/10 hover:text-foreground-muted"
         }`}
@@ -139,6 +143,7 @@ export default function ChoiceList({
           key={c.k}
           choice={c}
           state={choiceState(ctx, c.k)}
+          struck={eliminated.includes(c.k)}
           answered={!!answer}
           onChoose={() => onChoose(c.k)}
           onToggleEliminate={() => onToggleEliminate(c.k)}
