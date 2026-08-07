@@ -121,8 +121,6 @@ body,
 
 body {
   margin: 0;
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Painted here too, so overscroll and any gap below the screens stay on-theme. */

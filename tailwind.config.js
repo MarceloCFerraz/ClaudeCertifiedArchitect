@@ -9,6 +9,38 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      // Preflight emits `html { font-family: theme(fontFamily.sans) }`, so `sans` is the
+      // single lever for the app's body font, and `mono` for every `font-mono` label.
+      // Both faces are loaded in index.html; the rest of each list is the fallback chain,
+      // and `sans` ends in the emoji families Tailwind's default carries.
+      fontFamily: {
+        sans: [
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          '"Segoe UI"',
+          "Roboto",
+          "Helvetica",
+          "Arial",
+          "sans-serif",
+          '"Apple Color Emoji"',
+          '"Segoe UI Emoji"',
+          '"Segoe UI Symbol"',
+          '"Noto Color Emoji"',
+        ],
+        mono: [
+          '"Geist Mono"',
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Monaco",
+          "Consolas",
+          '"Liberation Mono"',
+          '"Courier New"',
+          "monospace",
+        ],
+      },
       colors: {
         background: token("background"),
         card: token("card"),
