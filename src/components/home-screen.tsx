@@ -134,7 +134,7 @@ export default function HomeScreen() {
                   className="h-4 w-4 accent-brand-vivid"
                 />
                 <span>
-                  Submit answers explicitly
+                  Confirm answers explicitly
                   <span className="ml-1 text-xs text-foreground-faint">
                     (pick first, then confirm)
                   </span>

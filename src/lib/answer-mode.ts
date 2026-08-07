@@ -8,7 +8,12 @@ import {
 export const ANSWER_MODE_STORAGE_KEY = "cca-f-answer-mode";
 
 /** "submit" — pick a choice, then commit it explicitly. "instant" — the click *is* the
-    answer, which is how the app behaved before this setting existed. */
+    answer, which is how the app behaved before this setting existed.
+
+    The controls label this mode "Confirm", not "Submit": on screen it would otherwise
+    share a verb with the "Submit answer" button beside it. The identifier stays
+    "submit" because that is what the code does — `submitAnswer`, `showSubmitButton` —
+    and renaming it would orphan every preference already in localStorage. */
 export type AnswerMode = "submit" | "instant";
 
 /** The order the toggle cycles through. */

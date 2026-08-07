@@ -6,14 +6,19 @@ const GLYPHS: Record<AnswerMode, string> = {
   instant: "⚡",
 };
 
+/* "Confirm" rather than "Submit": this sits a few centimetres from the actual
+   "Submit answer" button, and two controls with the same verb doing entirely
+   different things reads as one of them being broken. */
 const LABELS: Record<AnswerMode, string> = {
-  submit: "Submit",
+  submit: "Confirm",
   instant: "Instant",
 };
 
+/* Both hints name the current behaviour first and then say "switch to", so the
+   button cannot be mistaken for the thing that commits an answer. */
 const HINTS: Record<AnswerMode, string> = {
-  submit: "Answering: pick a choice, then submit it. Click to reveal on click instead.",
-  instant: "Answering: a click reveals the answer. Click to pick and submit separately.",
+  submit: "Answering: pick a choice, then confirm it. Click to switch to instant reveal.",
+  instant: "Answering: a click reveals the answer. Click to switch to pick-then-confirm.",
 };
 
 /** Two values, so it is a plain toggle rather than the theme's hover menu. It lives in

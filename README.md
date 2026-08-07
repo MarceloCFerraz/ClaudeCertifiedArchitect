@@ -44,8 +44,8 @@ move — and a **Submit answer** button below the choices commits it. Click the 
 again to take the pick back. This is the default because reading a long question and
 pointing at whatever looks best so far shouldn't score it.
 
-If you prefer the answer the moment you click, flip the **⏎ Submit / ⚡ Instant** button in
-the exam header, or untick **Submit answers explicitly** on the home screen — they are the
+If you prefer the answer the moment you click, flip the **⏎ Confirm / ⚡ Instant** button in
+the exam header, or untick **Confirm answers explicitly** on the home screen — they are the
 same setting, it can be changed mid-question, and it is remembered between visits. Switching
 never commits or discards a pick you have waiting.
 
