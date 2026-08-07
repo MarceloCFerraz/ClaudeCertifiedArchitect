@@ -208,10 +208,20 @@ export default function ExamScreen() {
             })}
           </div>
 
-          {/* explanation */}
+          {/* explanation — carries the same green/red tone as the choice it belongs to */}
           {isAnswered && (
-            <div className="mt-4 rounded-lg border-l-4 border-foreground bg-muted p-4">
-              <div className="font-mono text-[11px] font-semibold uppercase tracking-widest text-foreground-subtle">
+            <div
+              className={`mt-4 rounded-lg border-l-4 p-4 ${
+                a.correct
+                  ? "border-success bg-success-surface"
+                  : "border-destructive bg-destructive-surface"
+              }`}
+            >
+              <div
+                className={`font-mono text-[11px] font-semibold uppercase tracking-widest ${
+                  a.correct ? "text-success-text" : "text-destructive-text"
+                }`}
+              >
                 {a.correct ? "Correct" : `Correct answer: ${q.correctKey}`}
               </div>
               <p className="mt-1.5 text-sm leading-relaxed text-foreground-muted">{q.exp}</p>
