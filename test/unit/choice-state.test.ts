@@ -33,9 +33,27 @@ describe("choiceState", () => {
 
   it("never depends on the correct key before the answer is committed", () => {
     const keys = ["A", "B", "C", "D"];
-    const withB = keys.map((k) => choiceState({ correctKey: "B" }, k));
-    const withD = keys.map((k) => choiceState({ correctKey: "D" }, k));
+    const withB = keys.map((k) => choiceState({ correctKey: "B", eliminated: ["A"] }, k));
+    const withD = keys.map((k) => choiceState({ correctKey: "D", eliminated: ["A"] }, k));
     expect(withB).toEqual(withD);
+  });
+
+  it("marks a crossed-out choice as eliminated", () => {
+    expect(choiceState({ correctKey: CORRECT, eliminated: ["C"] }, "C")).toBe("eliminated");
+  });
+
+  it("leaves the choices that were not crossed out alone", () => {
+    expect(choiceState({ correctKey: CORRECT, eliminated: ["C"] }, "A")).toBe("idle");
+  });
+
+  it("lets the reveal win over a cross-out once the answer is in", () => {
+    const ctx = {
+      correctKey: CORRECT,
+      eliminated: [CORRECT],
+      answer: { selected: "A", correct: false },
+    };
+    expect(choiceState(ctx, CORRECT)).toBe("correct");
+    expect(choiceState(ctx, "A")).toBe("incorrect");
   });
 });
 

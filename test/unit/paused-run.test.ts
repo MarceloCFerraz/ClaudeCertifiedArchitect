@@ -38,6 +38,7 @@ function examState(over: Partial<ExamState> = {}): ExamState {
     questions: [pq("S1Q1"), pq("S1Q2")],
     idx: 1,
     answers: { S1Q1: { selected: "A", correct: true } },
+    eliminations: {},
     timed: false,
     elapsedSeconds: 0,
     remainingSeconds: 0,
@@ -53,6 +54,11 @@ describe("toPausedRun", () => {
     expect(run?.questions).toBe(exam.questions);
     expect(run?.idx).toBe(1);
     expect(run?.answers).toEqual({ S1Q1: { selected: "A", correct: true } });
+  });
+
+  it("carries the crossed-out choices into the parked run", () => {
+    const run = toPausedRun(examState({ eliminations: { S1Q2: ["B", "D"] } }), T0 + 60_000);
+    expect(run?.eliminations).toEqual({ S1Q2: ["B", "D"] });
   });
 
   it("derives an id that survives a pause, resume and second pause", () => {

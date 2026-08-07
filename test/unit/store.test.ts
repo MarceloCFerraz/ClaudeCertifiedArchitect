@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { answeredCount } from "../../src/lib/paused-run";
 import examReducer, { examActions } from "../../src/store/exam-slice";
 import historyReducer from "../../src/store/history-slice";
 import pausedReducer, { MAX_PAUSED, pausedActions } from "../../src/store/paused-slice";
@@ -63,6 +64,96 @@ describe("exam store flow", () => {
   });
 });
 
+describe("crossing choices out", () => {
+  function startedStore() {
+    const store = makeStore();
+    store.dispatch(startExam({ mode: "balanced", length: 12 }));
+    return store;
+  }
+
+  it("crosses a choice out and back", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    expect(store.getState().exam.eliminations[q.id]).toEqual(["C"]);
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    expect(store.getState().exam.eliminations[q.id]).toBeUndefined();
+  });
+
+  it("keeps the crossed-out letters sorted whatever order they were clicked", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    for (const key of ["D", "A", "C"]) {
+      store.dispatch(examActions.eliminationToggled({ qid: q.id, key }));
+    }
+    expect(store.getState().exam.eliminations[q.id]).toEqual(["A", "C", "D"]);
+  });
+
+  it("drops the entry entirely when the last cross-out is undone", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "A" }));
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "B" }));
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "A" }));
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "B" }));
+    expect(Object.keys(store.getState().exam.eliminations)).toEqual([]);
+  });
+
+  it("allows crossing every choice out", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    for (const c of q.choices) {
+      store.dispatch(examActions.eliminationToggled({ qid: q.id, key: c.k }));
+    }
+    expect(store.getState().exam.eliminations[q.id]).toHaveLength(4);
+  });
+
+  it("ignores a cross-out on a question already answered", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(examActions.answered({ qid: q.id, selected: "A", correct: false }));
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    expect(store.getState().exam.eliminations[q.id]).toBeUndefined();
+  });
+
+  it("keeps the cross-outs made before the answer was committed", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    store.dispatch(examActions.answered({ qid: q.id, selected: "A", correct: false }));
+    expect(store.getState().exam.eliminations[q.id]).toEqual(["C"]);
+  });
+
+  it("never looks at the correct answer", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    const distractor = q.choices.find((c) => c.k !== q.correctKey);
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: q.correctKey }));
+    const afterCorrect = store.getState().exam.eliminations[q.id];
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: q.correctKey }));
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: distractor?.k ?? "A" }));
+    const afterDistractor = store.getState().exam.eliminations[q.id];
+    expect(afterCorrect).toHaveLength(1);
+    expect(afterDistractor).toHaveLength(1);
+    expect(store.getState().exam.answers).toEqual({});
+  });
+
+  it("keeps cross-outs out of the answered count", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    expect(answeredCount(store.getState().exam.answers)).toBe(0);
+  });
+
+  it("starts a fresh exam with nothing crossed out", () => {
+    const store = startedStore();
+    const q = store.getState().exam.questions[0];
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    store.dispatch(startExam({ mode: "domain", domain: 2 }));
+    expect(store.getState().exam.eliminations).toEqual({});
+  });
+});
+
 describe("pausing and resuming", () => {
   it("moves the run out of the exam slice and back to the home screen", () => {
     const store = makeStore();
@@ -95,6 +186,29 @@ describe("pausing and resuming", () => {
     );
     expect(after.idx).toBe(4);
     expect(after.answers[q.id]).toEqual({ selected: q.correctKey, correct: true });
+  });
+
+  it("carries the cross-outs across a pause and resume", () => {
+    const store = makeStore();
+    store.dispatch(startExam({ mode: "balanced", length: 12 }));
+    const q = store.getState().exam.questions[2];
+    store.dispatch(examActions.eliminationToggled({ qid: q.id, key: "C" }));
+    store.dispatch(pauseExam(T0));
+
+    expect(store.getState().paused.runs[0].eliminations).toEqual({ [q.id]: ["C"] });
+    store.dispatch(resumeRun(store.getState().paused.runs[0].id, T0 + 1_000));
+    expect(store.getState().exam.eliminations).toEqual({ [q.id]: ["C"] });
+  });
+
+  it("restores a run parked before cross-outs existed", () => {
+    const store = makeStore();
+    store.dispatch(startExam({ mode: "balanced", length: 12 }));
+    store.dispatch(pauseExam(T0));
+    const { eliminations, ...legacy } = store.getState().paused.runs[0];
+    expect(eliminations).toBeDefined();
+
+    store.dispatch(examActions.examResumed({ run: legacy, now: T0 + 1_000 }));
+    expect(store.getState().exam.eliminations).toEqual({});
   });
 
   it("takes the run off the paused list once resumed", () => {

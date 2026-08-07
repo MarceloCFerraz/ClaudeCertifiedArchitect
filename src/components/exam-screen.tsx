@@ -15,11 +15,16 @@ import ScenarioCard from "./scenario-card";
 import ScenarioDomains from "./scenario-domains";
 import ScenarioTracker from "./scenario-tracker";
 
+/** A question with nothing crossed out carries no entry at all, so this stands in —
+    shared rather than a fresh `[]` per render, which would change identity each time. */
+const EMPTY_ELIMINATIONS: readonly string[] = [];
+
 export default function ExamScreen() {
   const dispatch = useAppDispatch();
   const questions = useAppSelector((s) => s.exam.questions);
   const idx = useAppSelector((s) => s.exam.idx);
   const answers = useAppSelector((s) => s.exam.answers);
+  const eliminations = useAppSelector((s) => s.exam.eliminations);
   const session = useAppSelector((s) => s.exam.session);
   const timed = useAppSelector((s) => s.exam.timed);
   const isMock = useAppSelector((s) => s.exam.config?.mode === "mock");
@@ -199,7 +204,11 @@ export default function ExamScreen() {
           <ChoiceList
             q={q}
             answer={a}
+            eliminated={eliminations[q.id] ?? EMPTY_ELIMINATIONS}
             onChoose={(key) => dispatch(answerQuestion(q.id, key, key === q.correctKey))}
+            onToggleEliminate={(key) =>
+              dispatch(examActions.eliminationToggled({ qid: q.id, key }))
+            }
           />
 
           {/* explanation — carries the same green/red tone as the choice it belongs to */}

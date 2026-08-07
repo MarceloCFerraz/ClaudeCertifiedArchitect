@@ -19,6 +19,7 @@ const initialState: ExamState = {
   questions: [],
   idx: 0,
   answers: {},
+  eliminations: {},
   timed: false,
   elapsedSeconds: 0,
   remainingSeconds: 0,
@@ -41,6 +42,7 @@ const examSlice = createSlice({
       state.runningSince = session.createdAt;
       state.idx = 0;
       state.answers = {};
+      state.eliminations = {};
       state.screen = "exam";
     },
     /* `selected` is the positional letter the shuffle assigned, so an answer only means
@@ -49,6 +51,20 @@ const examSlice = createSlice({
     answered(state, action: PayloadAction<{ qid: string; selected: string; correct: boolean }>) {
       const { qid, selected, correct } = action.payload;
       if (!state.answers[qid]) state.answers[qid] = { selected, correct };
+    },
+    /* Crossing a choice out is a scratchpad, not an answer: it never consults
+       `correctKey`, so nothing about how the question scores can leak before the
+       reader commits. Crossing every choice out is allowed — it is their reasoning
+       to record, and a cross-out is always reversible. */
+    eliminationToggled(state, action: PayloadAction<{ qid: string; key: string }>) {
+      const { qid, key } = action.payload;
+      if (state.answers[qid]) return;
+      const current = state.eliminations[qid] ?? [];
+      const next = current.includes(key)
+        ? current.filter((k) => k !== key)
+        : [...current, key].sort();
+      if (next.length === 0) delete state.eliminations[qid];
+      else state.eliminations[qid] = next;
     },
     navigatedTo(state, action: PayloadAction<number>) {
       const max = state.questions.length - 1;
@@ -81,6 +97,7 @@ const examSlice = createSlice({
       state.runningSince = now;
       state.idx = run.idx;
       state.answers = run.answers;
+      state.eliminations = run.eliminations ?? {};
       state.screen = "exam";
     },
     finished(state, action: PayloadAction<number>) {

@@ -30,6 +30,13 @@ export interface AnswerRecord {
 
 export type Answers = Record<string, AnswerRecord>;
 
+/** Choices the reader has ruled out, by question id — a scratchpad, never scored.
+    The letters are kept sorted so one logical state always serializes to the same
+    bytes, and a question with nothing crossed out carries no entry at all: an
+    `undefined` value would survive in memory but vanish through JSON, leaving
+    "has an entry" true before a reload and false after it. */
+export type Eliminations = Record<string, string[]>;
+
 /** Wall-clock bookkeeping for a run. Time is never counted by ticking a stored
     counter: `runningSince` marks when the live segment began, and elapsed/remaining
     are derived from it, so a closed tab or a throttled background timer cannot
@@ -59,6 +66,7 @@ export interface ExamState extends ExamClock {
   questions: PreparedQuestion[];
   idx: number;
   answers: Answers;
+  eliminations: Eliminations;
 }
 
 /** A run parked mid-way. It carries its own draw: the questions are replayed exactly
@@ -73,6 +81,9 @@ export interface PausedRun extends ExamClock {
   questions: PreparedQuestion[];
   idx: number;
   answers: Answers;
+  // Optional because runs parked by an earlier build are rehydrated verbatim out of
+  // the persisted array and simply do not have them. `examResumed` defaults them.
+  eliminations?: Eliminations;
   pausedAt: number; // epoch ms
 }
 

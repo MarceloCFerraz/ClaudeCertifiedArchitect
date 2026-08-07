@@ -37,6 +37,10 @@ npm test           # Jest unit/logic tests
 
 Tick **Timed · 2 min/question** before starting to add a countdown to any mode (the full mock is always timed). A timed run that expires jumps to the results screen with your partial answers preserved.
 
+## Answering a question
+
+Every choice has a small **scissors** under its letter. Click it to rule that option out: the text is struck through and the option stops being selectable, which is the ordinary way to work a four-option question down to two. It is always reversible — click the scissors again to bring the option back — and crossing out has no effect on your score. Cross-outs are yours until you answer, then they stay on screen alongside the result, so ruling out what turned out to be the right answer is visible rather than quietly forgotten.
+
 ## Pausing and resuming
 
 Need to stop halfway? Hit **✕** in the exam header and choose **Pause & exit**. The run moves to a **Paused exams** card on the home screen, where you can **Resume** it exactly where you left off — same questions, same order, same answers — or **Delete** it. Several runs can sit there at once, so starting a drill never costs you a half-finished mock. Choosing **Discard** instead throws the run away immediately.

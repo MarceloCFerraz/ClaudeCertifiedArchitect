@@ -88,6 +88,39 @@ restarts the clock for a run left open, and clears any stored run that has no dr
 
 ---
 
+## Answering a question
+
+The one invariant everything hangs off: **presence in `exam.answers` means committed —
+revealed, scored, and counted toward finishing.** `scoreExam`, `answeredCount`, `report.ts`
+and the tracker all read it as "answered" by mere existence, so nothing provisional may ever
+be written there. Working state lives in its own map beside it.
+
+`exam.eliminations` (`Record<qid, letter[]>`) is the reader's scratchpad: choices crossed out
+via the scissors under each letter badge. It never consults `correctKey` — that is what keeps
+the answer from leaking before the reveal — and it is not scored. Two shape rules the tests
+enforce: the letters are **sorted**, and a question with nothing crossed out carries **no
+entry at all** (`delete`, not `= undefined`, which survives in memory but vanishes through
+JSON and would make `qid in eliminations` disagree with itself across a reload).
+
+Both maps ride along with a paused run, but they are **optional on `PausedRun`** — runs parked
+by an earlier build rehydrate verbatim out of the persisted array and simply lack them, so
+`examResumed` defaults them. New keys on `ExamState` need no migration: redux-persist's
+default `autoMergeLevel1` iterates the keys *in storage*, so an absent one keeps its
+`initialState` value.
+
+The per-choice and per-square branching lives in `src/lib/choice-state.ts` rather than in JSX,
+because there are no UI tests — a pure function is the only way it gets covered. The reveal
+wins over a cross-out once an answer is in, so ruling the right answer out shows it green
+*and* struck through.
+
+Writes here are user-paced clicks, the same class as `navigatedTo`, which already rewrites the
+run on every Next. That is well clear of the per-second rule above; do **not** reach for
+redux-persist `throttle` to "fix" it — `processNextKey` handles one key per tick, and nothing
+here dispatches `FLUSH`, so throttling would delay the durable write and undercut the
+"closing the tab loses at most one question's worth of time" contract.
+
+---
+
 ## Glossary
 
 `src/data/glossary.json` defines the vocabulary the exam takes for granted, for readers

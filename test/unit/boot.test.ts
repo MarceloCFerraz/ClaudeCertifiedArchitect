@@ -33,6 +33,7 @@ function rootState(exam: Partial<ExamState> = {}): RootState {
       idx: 0,
       answers: {},
       timed: false,
+      eliminations: {},
       elapsedSeconds: 0,
       remainingSeconds: 0,
       runningSince: T0,
