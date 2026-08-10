@@ -273,13 +273,33 @@ fill its share of a 60-question mock (the schema test enforces this floor).
 
 ### Quality bar
 
-- One unambiguously correct answer; three distractors that are *plausible* but reflect
-  real anti-patterns or common misconceptions, not obviously wrong throwaways.
-- **Balance option lengths** — keep all four options in a tight length band (roughly
-  90–150 chars, none more than ~1.4× the shortest) and make sure the correct answer is
-  **not** the longest. Otherwise the answer is guessable by length alone, which the real
-  exam avoids. `test/unit/answer-balance.test.ts` enforces this bank-wide.
-- The explanation should teach: state why the right answer is right and why the
-  tempting distractor is wrong.
+- **One *best* answer under a criterion the stem states — not one obviously correct
+  answer.** At least one distractor must be a *defensible* option: something a competent
+  engineer would actually propose, and which would be the correct answer if one fact in
+  the scenario changed. The test to apply: *could I write a question, one fact different,
+  where this distractor is the key?* If no distractor passes, the question is recognition,
+  not discrimination, and a reader can score it by elimination.
+- **The flaw lives in the substance, never the phrasing.** A distractor must not give
+  itself away by *how it reads* — no "simply do X and it will work", no trailing clause
+  confessing its own weakness ("…, which leaks the secret into version control"), no
+  absolutism the correct answer never uses. The flaw should be one of: wrong scope · a
+  prompt-only fix for something needing enforcement · over-engineering · the right fix at
+  the wrong time · solves a real but different problem. Register asymmetry is the single
+  easiest tell to exploit and the hardest to notice while authoring.
+- **Put the deciding criterion in the STEM, not in the correct answer.** "…while the root
+  cause is being fixed", "…and the guarantee has to survive a prompt edit". This is also
+  what protects the length band: stem length is unconstrained, choice length is not.
+- **Balance option lengths** — keep all four options in a tight band (roughly 90–150
+  chars, none more than ~1.4× the shortest). The tell runs **both ways**: the correct
+  answer must be neither reliably the longest nor reliably the shortest. Vary which option
+  is longest deliberately. `test/unit/answer-balance.test.ts` enforces both directions.
+- **Explanations teach in three beats**: why the winner wins *under the criterion the stem
+  names*; then the runner-up **by name** — what it genuinely does solve, and why it loses
+  *here*; then one clause for the remaining two. The middle beat is the point: a near-miss
+  should feel instructive rather than arbitrary. Keep `exp` under ~420 chars.
+- **Watch for bank-level tells no single question shows.** If `temperature`, "raise
+  max_tokens", or "prompt it harder" is a wrong option in dozens of questions and never
+  the right one, readers learn to eliminate it on sight. The same goes for near-duplicate
+  questions: two items teaching one lesson halve the bank's real coverage.
 - Prefer questions that test judgment in the scenario over trivia recall.
 - Tag `d`, `s`, and `ts` accurately; only flag `diff: "hard"` when warranted.
