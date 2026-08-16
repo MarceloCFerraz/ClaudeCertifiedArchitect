@@ -253,6 +253,11 @@
     "also": ["lost-in-the-middle"]
   },
   {
+    "term": "Manifest",
+    "def": "An index file recording what a run produced and where each piece was written, so something else can find it later without redoing the work.",
+    "more": "A manifest holds the inventory, never the contents: entries pointing at the files that hold the real output. In a multi-agent run it is what makes a crash recoverable — each agent writes its structured output to a known location and records it, so a coordinator restarting afterwards reads the manifest, sees which steps already finished, and resumes at the first one that did not. The word carries the same sense elsewhere in software: a package manifest lists a project's dependencies, a container image manifest lists its layers."
+  },
+  {
     "term": "max_tokens",
     "def": "The ceiling on how long a single response may be, measured in tokens.",
     "more": "Hitting it truncates the reply mid-flight and surfaces as stop_reason \"max_tokens\" — a distinct failure from the model choosing to stop, and one that needs a larger ceiling or a smaller task rather than a retry."
