@@ -211,6 +211,24 @@ export default function HomeScreen() {
               <span className="font-mono text-sm text-foreground-faint">▶</span>
             </button>
 
+            <button
+              type="button"
+              onClick={() => start({ mode: "hardcore" })}
+              className="group flex w-full items-center justify-between rounded-lg border-2 border-destructive-border bg-destructive-surface px-4 py-3.5 text-left transition hover:border-destructive focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-vivid"
+            >
+              <span>
+                <span className="block font-semibold text-destructive-text">
+                  Hardcore · all {BANK.length} questions
+                </span>
+                <span className="block text-sm text-foreground-subtle">
+                  Every scenario and domain in one exam (timed only if the timer is on)
+                </span>
+              </span>
+              <span className="font-mono text-sm text-destructive transition group-hover:translate-x-0.5">
+                ▶
+              </span>
+            </button>
+
             {/* drills */}
             <details className="rounded-lg border border-border px-4 py-3">
               <summary className="cursor-pointer select-none font-semibold">

@@ -1,4 +1,11 @@
-import { buildReport, fileTypeFor, labelFor, reportFileName } from "../../src/lib/report";
+import { BANK } from "../../src/data/questions";
+import {
+  buildReport,
+  fileTypeFor,
+  hudLabelFor,
+  labelFor,
+  reportFileName,
+} from "../../src/lib/report";
 import type { Answers, PreparedQuestion, Session } from "../../src/lib/types";
 
 const question: PreparedQuestion = {
@@ -32,6 +39,7 @@ describe("fileTypeFor", () => {
     expect(fileTypeFor({ mode: "scenarios" })).toBe("scenarios");
     expect(fileTypeFor({ mode: "domain", domain: 3 })).toBe("domain-d3");
     expect(fileTypeFor({ mode: "scenario", scenario: 2 })).toBe("scenario-2");
+    expect(fileTypeFor({ mode: "hardcore" })).toBe("hardcore");
   });
 });
 
@@ -43,6 +51,21 @@ describe("labelFor", () => {
     expect(labelFor({ mode: "domain", domain: 1 })).toContain(
       "Agentic Architecture & Orchestration",
     );
+  });
+  it("labels a hardcore exam with the whole bank's size", () => {
+    expect(labelFor({ mode: "hardcore" })).toBe(`Hardcore (all ${BANK.length} questions)`);
+  });
+});
+
+describe("hudLabelFor", () => {
+  it("tags the full mock as a mock exam", () => {
+    expect(hudLabelFor("mock")).toBe("Mock exam");
+  });
+  it("tags a hardcore run as hardcore", () => {
+    expect(hudLabelFor("hardcore")).toBe("Hardcore");
+  });
+  it("tags every other mode as practice", () => {
+    expect(hudLabelFor("balanced")).toBe("Practice");
   });
 });
 

@@ -1,3 +1,4 @@
+import { BANK } from "../../src/data/questions";
 import { createExamSession, SECONDS_PER_QUESTION } from "../../src/lib/session";
 
 describe("createExamSession timing", () => {
@@ -19,6 +20,19 @@ describe("createExamSession timing", () => {
     expect(made.timed).toBe(true);
     expect(made.remainingSeconds).toBe(12 * SECONDS_PER_QUESTION);
     expect(made.session.timed).toBe(true);
+  });
+
+  it("leaves hardcore untimed by default", () => {
+    const made = createExamSession({ mode: "hardcore" });
+    expect(made.questions).toHaveLength(BANK.length);
+    expect(made.timed).toBe(false);
+    expect(made.remainingSeconds).toBe(0);
+  });
+
+  it("times hardcore at 2 min/question across the whole bank when opted in", () => {
+    const made = createExamSession({ mode: "hardcore", timed: true });
+    expect(made.timed).toBe(true);
+    expect(made.remainingSeconds).toBe(BANK.length * SECONDS_PER_QUESTION);
   });
 
   it("records the seed the draw was dealt from", () => {

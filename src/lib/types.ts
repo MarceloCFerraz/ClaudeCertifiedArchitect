@@ -1,6 +1,6 @@
 import type { Question } from "../data/schema";
 
-export type Mode = "balanced" | "mock" | "scenarios" | "domain" | "scenario";
+export type Mode = "balanced" | "mock" | "scenarios" | "domain" | "scenario" | "hardcore";
 
 export type Screen = "home" | "exam" | "results";
 

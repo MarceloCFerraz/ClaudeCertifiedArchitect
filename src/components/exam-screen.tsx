@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSaveReport } from "../hooks/use-save-report";
 import { remainingAt } from "../lib/exam-clock";
 import { fmtTime } from "../lib/format";
+import { hudLabelFor } from "../lib/report";
 import { scoreExam } from "../lib/scoring";
 import { examActions } from "../store/exam-slice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -32,7 +33,7 @@ export default function ExamScreen() {
   const { mode } = useAnswerMode();
   const session = useAppSelector((s) => s.exam.session);
   const timed = useAppSelector((s) => s.exam.timed);
-  const isMock = useAppSelector((s) => s.exam.config?.mode === "mock");
+  const examMode = useAppSelector((s) => s.exam.config?.mode);
   const elapsedSeconds = useAppSelector((s) => s.exam.elapsedSeconds);
   const remainingSeconds = useAppSelector((s) => s.exam.remainingSeconds);
   const runningSince = useAppSelector((s) => s.exam.runningSince);
@@ -138,7 +139,7 @@ export default function ExamScreen() {
             />
             <div className="min-w-0">
               <div className="font-mono text-[11px] uppercase tracking-widest text-stone-500">
-                CCA-F · {isMock ? "Mock exam" : "Practice"}
+                CCA-F · {examMode ? hudLabelFor(examMode) : "Practice"}
               </div>
               <div className="flex items-center gap-2">
                 <span className="truncate font-mono text-xs text-stone-300">

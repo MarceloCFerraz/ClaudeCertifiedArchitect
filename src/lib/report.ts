@@ -1,8 +1,9 @@
 import { DOMAINS } from "../data/domains";
+import { BANK } from "../data/questions";
 import { SCENARIOS } from "../data/scenarios";
 import { stamp } from "./format";
 import { PASS_SCORE, scoreExam } from "./scoring";
-import type { Answers, ExamConfig, PreparedQuestion, Session } from "./types";
+import type { Answers, ExamConfig, Mode, PreparedQuestion, Session } from "./types";
 
 export function fileTypeFor(config: ExamConfig): string {
   switch (config.mode) {
@@ -16,6 +17,8 @@ export function fileTypeFor(config: ExamConfig): string {
       return `domain-d${config.domain}`;
     case "scenario":
       return `scenario-${config.scenario}`;
+    case "hardcore":
+      return "hardcore";
     default:
       return "exam";
   }
@@ -33,8 +36,22 @@ export function labelFor(config: ExamConfig): string {
       return `Drill · ${DOMAINS[config.domain ?? 0]?.name ?? `Domain ${config.domain}`}`;
     case "scenario":
       return `Drill · Scenario ${config.scenario}: ${SCENARIOS[config.scenario ?? 0]?.title ?? ""}`;
+    case "hardcore":
+      return `Hardcore (all ${BANK.length} questions)`;
     default:
       return "Exam";
+  }
+}
+
+/** The short run-kind tag shown in the exam HUD. */
+export function hudLabelFor(mode: Mode): string {
+  switch (mode) {
+    case "mock":
+      return "Mock exam";
+    case "hardcore":
+      return "Hardcore";
+    default:
+      return "Practice";
   }
 }
 

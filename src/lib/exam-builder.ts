@@ -91,6 +91,8 @@ function selectQuestions(config: ExamConfig, rng: Rng): Question[] {
       return BANK.filter((q) => q.d === config.domain);
     case "scenario":
       return BANK.filter((q) => q.s === config.scenario);
+    case "hardcore":
+      return [...BANK];
     default:
       return [...BANK];
   }

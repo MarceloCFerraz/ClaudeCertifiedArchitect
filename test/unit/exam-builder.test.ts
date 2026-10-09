@@ -96,6 +96,23 @@ describe("buildExam", () => {
     expect(new Set(exam.map((q) => q.s)).size).toBe(4);
   });
 
+  it("puts every bank question exactly once into a hardcore exam", () => {
+    const exam = buildExam({ mode: "hardcore" }, mulberry32(4));
+    expect(exam.map((q) => q.id).sort()).toEqual(BANK.map((q) => q.id).sort());
+  });
+
+  it("covers every scenario and domain in a hardcore exam", () => {
+    const exam = buildExam({ mode: "hardcore" }, mulberry32(4));
+    expect(new Set(exam.map((q) => q.s)).size).toBe(6);
+    expect(new Set(exam.map((q) => q.d)).size).toBe(5);
+  });
+
+  it("keeps a hardcore exam grouped by scenario", () => {
+    const exam = buildExam({ mode: "hardcore" }, mulberry32(4));
+    const runs = exam.filter((q, i) => i === 0 || exam[i - 1].s !== q.s);
+    expect(runs).toHaveLength(6);
+  });
+
   it("is deterministic for a given seed", () => {
     const a = buildExam({ mode: "balanced", length: 12 }, mulberry32(11)).map((q) => q.id);
     const b = buildExam({ mode: "balanced", length: 12 }, mulberry32(11)).map((q) => q.id);
