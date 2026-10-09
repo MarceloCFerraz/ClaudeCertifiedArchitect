@@ -68,6 +68,12 @@ sync with `THEME_STORAGE_KEY`.
 
 ## Runs, pausing and the clock
 
+Modes (`Mode` in `src/lib/types.ts`) differ only in their draw (`selectQuestions` in
+`src/lib/exam-builder.ts`) and their labels (`src/lib/report.ts`). `hardcore` is the whole
+bank in one run, grouped by scenario like every other mode, and timed only when opted in
+(only `mock` is forced timed). Its persisted run is roughly 3× a mock's, still written only
+on user-paced clicks.
+
 A run **carries its own draw**. `exam.questions` is persisted rather than rebuilt from the
 seed, because `AnswerRecord.selected` is a positional letter assigned *after* the choice
 shuffle — replaying a seed against an edited bank would silently re-point stored answers at

@@ -34,6 +34,7 @@ npm test           # Jest unit/logic tests
 - **Full mock exam** — 60 questions / 120-minute countdown, like the real exam, biased toward the harder question pool. Always timed; auto-submits when time runs out.
 - **Scenario mock** — 4 of 6 scenarios drawn at random.
 - **Domain drill** / **Scenario drill** — focus on a single domain or scenario.
+- **Hardcore** — every question in the bank, across all scenarios and domains, in one exam. Timed only if you tick the timer (about 6 hours at 2 min/question).
 
 Tick **Timed · 2 min/question** before starting to add a countdown to any mode (the full mock is always timed). A timed run that expires jumps to the results screen with your partial answers preserved.
 
